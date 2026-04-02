@@ -61,7 +61,7 @@ export const contentDocumentsSeed: ContentDocument[] = [
     author: "김관리",
     createdAt: "2026-03-25 16:20",
     updatedAt: "2026-03-29 08:15",
-    status: "PROCESSING",
+    status: "ACTIVE",
     fileName: "payment-guide.md",
     fileSize: "0.8MB",
     history: [
@@ -116,7 +116,7 @@ export async function uploadContentDocument(input: {
     author: "박운영",
     createdAt: "2026-04-02 09:00",
     updatedAt: "2026-04-02 09:00",
-    status: "PROCESSING",
+    status: "ACTIVE",
     fileName: input.fileName,
     fileSize: "0MB",
     history: [
@@ -131,4 +131,3 @@ export async function uploadContentDocument(input: {
     ]
   };
 }
-

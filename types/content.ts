@@ -1,5 +1,5 @@
 export type ContentDocumentType = "MANUAL" | "FAQ";
-export type ContentDocumentStatus = "ACTIVE" | "PROCESSING" | "FAILED";
+export type ContentDocumentStatus = "ACTIVE" | "FAILED";
 
 export type ContentHistoryItem = {
   id: string;
@@ -34,4 +34,3 @@ export type ContentUploadForm = {
   path: string;
   type: ContentDocumentType;
 };
-
