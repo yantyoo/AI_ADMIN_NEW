@@ -189,7 +189,7 @@ export function AuthScreen() {
   const storedProfile = readStoredAuthProfile();
 
   return (
-    <main className="auth-shell">
+    <main className="auth-shell auth-shell--standalone">
       <section className="auth-card auth-standalone">
         <div className="auth-card__intro auth-standalone__intro">
           <span className="auth-card__badge">XpERP</span>

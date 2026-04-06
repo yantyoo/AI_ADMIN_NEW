@@ -2464,6 +2464,8 @@ select.field__input {
     radial-gradient(circle at top left, rgba(74, 130, 245, 0.14), transparent 38%),
     radial-gradient(circle at bottom right, rgba(39, 184, 112, 0.12), transparent 32%),
     linear-gradient(150deg, #f5f8fd 0%, #edf1f8 100%);
+  place-items: center;
+  padding: 24px;
 }
 
 .auth-card {
@@ -2649,8 +2651,10 @@ select.field__input {
 }
 
 .auth-standalone {
-  width: min(100%, 520px);
+  width: min(100%, 920px);
   padding: 40px;
+  min-height: auto;
+  grid-template-columns: 1fr;
   border: 1px solid rgba(220, 228, 242, 0.92);
   border-radius: 26px;
   background: rgba(255, 255, 255, 0.96);
@@ -2661,6 +2665,26 @@ select.field__input {
   padding: 0;
   background: transparent;
   color: var(--text);
+}
+
+.auth-standalone__intro .auth-card__badge {
+  background: #e6effe;
+  color: #2e5fc8;
+}
+
+.auth-standalone__intro .auth-card__description {
+  margin-top: 18px;
+  color: var(--text-muted);
+}
+
+.auth-standalone .auth-form {
+  padding: 28px 0 0;
+}
+
+.auth-standalone .auth-form__fields,
+.auth-standalone .auth-form__actions,
+.auth-standalone .auth-form__feedback {
+  max-width: 100%;
 }
 
 .auth-card .primary-button {
