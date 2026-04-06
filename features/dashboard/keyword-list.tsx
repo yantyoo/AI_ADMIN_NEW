@@ -5,15 +5,16 @@ type KeywordListProps = {
   title: string;
   rangeLabel: string;
   items: KeywordItem[];
+  bare?: boolean;
 };
 
 const formatPercent = (value: number) => {
   return Number.isInteger(value) ? `${value}%` : `${value.toFixed(1)}%`;
 };
 
-export function KeywordList({ title, rangeLabel, items }: KeywordListProps) {
+export function KeywordList({ title, rangeLabel, items, bare }: KeywordListProps) {
   return (
-    <section className="dashboard-keyword-card">
+    <section className={`dashboard-keyword-card${bare ? " dashboard-keyword-card--bare" : ""}`}>
       <SectionHeader title={title} subtitle={rangeLabel} />
 
       {items.length === 0 ? (

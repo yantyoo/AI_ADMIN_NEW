@@ -18,7 +18,6 @@ export function MetricCard({ metric }: MetricCardProps) {
         </strong>
         <span>{metric.compareLabel}</span>
       </div>
-      <div className="metric-card__policy">{metric.policyText}</div>
     </article>
   );
 }

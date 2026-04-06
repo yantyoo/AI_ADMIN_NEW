@@ -26,11 +26,9 @@ export function DashboardPanel({ data }: DashboardPanelProps) {
     <div className="dashboard-grid">
       <section className="panel panel--main">
         <SectionHeader
-          title="기간별 질문 현황"
-          subtitle="선택한 기간의 접속자 수와 문의 수를 함께 확인합니다."
+          title="기간별 지표 현황"
           actions={
             <>
-              <span className="panel__range-label">{selectedLabel.helper}</span>
               <TimeRangeTabs value={selectedRange} onChange={setSelectedRange} />
             </>
           }
@@ -46,7 +44,7 @@ export function DashboardPanel({ data }: DashboardPanelProps) {
               ))}
             </div>
 
-            <TrendChart points={selectedData.trend} rangeLabel={selectedLabel.axisLabel} />
+            <TrendChart points={selectedData.trend} rangeNote={selectedLabel.note} />
           </>
         )}
       </section>

@@ -27,7 +27,6 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "visitors",
         label: "접속자 수",
         value: 184,
-        policyText: "중복 사용자를 제외한 단일 사용자 기준입니다.",
         compareLabel: "전일 대비",
         compareRate: 4.8,
         compareDirection: "UP"
@@ -36,7 +35,6 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "inquiries",
         label: "문의 수",
         value: 326,
-        policyText: "사용자 질문 발생 건수를 기준으로 집계합니다.",
         compareLabel: "전일 대비",
         compareRate: 2.1,
         compareDirection: "UP"
@@ -45,20 +43,19 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "failures",
         label: "실패 수",
         value: 4,
-        policyText: "실패 응답 발생 건수를 기준으로 집계합니다.",
         compareLabel: "전일 대비",
         compareRate: 1.2,
         compareDirection: "DOWN"
       }
     ],
     trend: [
-      { label: "00", dateLabel: "2026-04-02 00:00", visitors: 12, inquiries: 8 },
-      { label: "04", dateLabel: "2026-04-02 04:00", visitors: 18, inquiries: 12 },
-      { label: "08", dateLabel: "2026-04-02 08:00", visitors: 56, inquiries: 40 },
-      { label: "12", dateLabel: "2026-04-02 12:00", visitors: 73, inquiries: 55 },
-      { label: "16", dateLabel: "2026-04-02 16:00", visitors: 92, inquiries: 69 },
-      { label: "20", dateLabel: "2026-04-02 20:00", visitors: 75, inquiries: 60 },
-      { label: "24", dateLabel: "2026-04-03 00:00", visitors: 41, inquiries: 28 }
+      { label: "3/31", dateLabel: "2026-03-31", visitors: 41, inquiries: 28 },
+      { label: "4/1", dateLabel: "2026-04-01", visitors: 53, inquiries: 39 },
+      { label: "4/2", dateLabel: "2026-04-02", visitors: 68, inquiries: 51 },
+      { label: "4/3", dateLabel: "2026-04-03", visitors: 74, inquiries: 58 },
+      { label: "4/4", dateLabel: "2026-04-04", visitors: 83, inquiries: 62 },
+      { label: "4/5", dateLabel: "2026-04-05", visitors: 91, inquiries: 68 },
+      { label: "4/6", dateLabel: "2026-04-06", visitors: 97, inquiries: 72 }
     ],
     fixedKeywords: [
       { rank: 1, label: "비밀번호 변경", count: 92, ratio: 42.2 },
@@ -91,7 +88,6 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "visitors",
         label: "접속자 수",
         value: 1051,
-        policyText: "중복 사용자를 제외한 단일 사용자 기준입니다.",
         compareLabel: "지난주 대비",
         compareRate: 5,
         compareDirection: "UP"
@@ -100,7 +96,6 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "inquiries",
         label: "문의 수",
         value: 1820,
-        policyText: "사용자 질문 발생 건수를 기준으로 집계합니다.",
         compareLabel: "지난주 대비",
         compareRate: 3.4,
         compareDirection: "UP"
@@ -109,20 +104,19 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "failures",
         label: "실패 수",
         value: 19,
-        policyText: "실패 응답 발생 건수를 기준으로 집계합니다.",
         compareLabel: "지난주 대비",
         compareRate: 0.8,
         compareDirection: "DOWN"
       }
     ],
     trend: [
-      { label: "03.24", dateLabel: "2026-03-24", visitors: 330, inquiries: 250 },
-      { label: "03.25", dateLabel: "2026-03-25", visitors: 430, inquiries: 320 },
-      { label: "03.26", dateLabel: "2026-03-26", visitors: 500, inquiries: 360 },
-      { label: "03.27", dateLabel: "2026-03-27", visitors: 495, inquiries: 350 },
-      { label: "03.28", dateLabel: "2026-03-28", visitors: 540, inquiries: 410 },
-      { label: "03.29", dateLabel: "2026-03-29", visitors: 642, inquiries: 506 },
-      { label: "03.30", dateLabel: "2026-03-30", visitors: 492, inquiries: 370 }
+      { label: "4월 1주차", dateLabel: "2026-04-01 ~ 2026-04-07", visitors: 330, inquiries: 250 },
+      { label: "4월 2주차", dateLabel: "2026-04-08 ~ 2026-04-14", visitors: 430, inquiries: 320 },
+      { label: "4월 3주차", dateLabel: "2026-04-15 ~ 2026-04-21", visitors: 500, inquiries: 360 },
+      { label: "4월 4주차", dateLabel: "2026-04-22 ~ 2026-04-28", visitors: 495, inquiries: 350 },
+      { label: "4월 5주차", dateLabel: "2026-04-29 ~ 2026-05-05", visitors: 540, inquiries: 410 },
+      { label: "4월 6주차", dateLabel: "2026-05-06 ~ 2026-05-12", visitors: 642, inquiries: 506 },
+      { label: "4월 7주차", dateLabel: "2026-05-13 ~ 2026-05-19", visitors: 492, inquiries: 370 }
     ],
     fixedKeywords: [
       { rank: 1, label: "비밀번호 변경", count: 1520, ratio: 44.8 },
@@ -155,7 +149,6 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "visitors",
         label: "접속자 수",
         value: 4216,
-        policyText: "중복 사용자를 제외한 단일 사용자 기준입니다.",
         compareLabel: "전월 대비",
         compareRate: 7.2,
         compareDirection: "UP"
@@ -164,7 +157,6 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "inquiries",
         label: "문의 수",
         value: 8014,
-        policyText: "사용자 질문 발생 건수를 기준으로 집계합니다.",
         compareLabel: "전월 대비",
         compareRate: 4.6,
         compareDirection: "UP"
@@ -173,17 +165,19 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
         key: "failures",
         label: "실패 수",
         value: 83,
-        policyText: "실패 응답 발생 건수를 기준으로 집계합니다.",
         compareLabel: "전월 대비",
         compareRate: 2.4,
         compareDirection: "DOWN"
       }
     ],
     trend: [
-      { label: "1주", dateLabel: "2026-03-01 ~ 2026-03-07", visitors: 1420, inquiries: 1110 },
-      { label: "2주", dateLabel: "2026-03-08 ~ 2026-03-14", visitors: 1880, inquiries: 1425 },
-      { label: "3주", dateLabel: "2026-03-15 ~ 2026-03-21", visitors: 2140, inquiries: 1632 },
-      { label: "4주", dateLabel: "2026-03-22 ~ 2026-03-31", visitors: 2574, inquiries: 1847 }
+      { label: "10월", dateLabel: "2025-10", visitors: 1200, inquiries: 940 },
+      { label: "11월", dateLabel: "2025-11", visitors: 1420, inquiries: 1110 },
+      { label: "12월", dateLabel: "2025-12", visitors: 1880, inquiries: 1425 },
+      { label: "1월", dateLabel: "2026-01", visitors: 2140, inquiries: 1632 },
+      { label: "2월", dateLabel: "2026-02", visitors: 2256, inquiries: 1714 },
+      { label: "3월", dateLabel: "2026-03", visitors: 2390, inquiries: 1788 },
+      { label: "4월", dateLabel: "2026-04", visitors: 2574, inquiries: 1847 }
     ],
     fixedKeywords: [
       { rank: 1, label: "비밀번호 변경", count: 3610, ratio: 48.1 },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { FeedbackDetail, FeedbackFilters, FeedbackReaction } from "@/types/feedback";
+import type { FeedbackDetail, FeedbackFilters, FeedbackPeriod, FeedbackReaction } from "@/types/feedback";
 
 type FeedbackPanelProps = {
   feedbacks: FeedbackDetail[];
@@ -18,30 +18,93 @@ const filterOptions: Array<{ label: string; value: FeedbackFilters["reaction"] }
   { label: "부정", value: "NEGATIVE" }
 ];
 
+const periodOptions: Array<{ label: string; value: FeedbackPeriod }> = [
+  { label: "일간", value: "DAY" },
+  { label: "주간", value: "WEEK" },
+  { label: "월간", value: "MONTH" }
+];
+
+const getDateKey = (value: string) => value.slice(0, 10);
+
+const toDate = (value: string) => new Date(value.replace(" ", "T"));
+
+const formatDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const getPeriodStart = (latestDate: Date, period: FeedbackPeriod) => {
+  const next = new Date(latestDate);
+
+  if (period === "DAY") {
+    return next;
+  }
+
+  if (period === "WEEK") {
+    next.setDate(next.getDate() - 6);
+    return next;
+  }
+
+  next.setDate(next.getDate() - 29);
+  return next;
+};
+
 const compareFeedbackDesc = (left: FeedbackDetail, right: FeedbackDetail) =>
   right.createdAt.localeCompare(left.createdAt);
 
 export function FeedbackPanel({ feedbacks }: FeedbackPanelProps) {
   const [filters, setFilters] = useState<FeedbackFilters>({ reaction: "ALL" });
+  const [selectedPeriod, setSelectedPeriod] = useState<FeedbackPeriod>("WEEK");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
+  const latestDate = useMemo(() => {
     const next = feedbacks
+      .slice()
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+
+    return next ? toDate(next.createdAt) : new Date();
+  }, [feedbacks]);
+
+  const filtered = useMemo(() => {
+    const periodStart = getPeriodStart(latestDate, selectedPeriod);
+    const next = feedbacks
+      .filter((feedback) => {
+        if (selectedPeriod === "DAY") {
+          return getDateKey(feedback.createdAt) === formatDateKey(latestDate);
+        }
+
+        return toDate(feedback.createdAt).getTime() >= periodStart.getTime();
+      })
       .filter((feedback) => filters.reaction === "ALL" || feedback.reaction === filters.reaction)
       .slice()
       .sort(compareFeedbackDesc);
 
     return next;
-  }, [feedbacks, filters.reaction]);
+  }, [feedbacks, filters.reaction, latestDate, selectedPeriod]);
 
   const selected = filtered.find((feedback) => feedback.id === selectedId) ?? filtered[0] ?? null;
 
   return (
     <div className="feedback-layout">
-      <div className="feedback-stat-bar">
-        <div className="metric-card feedback-stat-card">
-          <p className="metric-card__label">전체 피드백</p>
-          <p className="metric-card__value">{feedbacks.length}</p>
+      <div className="feedback-period-bar">
+        <div>
+          <p className="feedback-period-bar__label">기간 선택</p>
+          <p className="feedback-period-bar__caption">최근 등록 기준으로 일간 / 주간 / 월간을 전환합니다.</p>
+        </div>
+        <div className="feedback-period-bar__fields">
+          {periodOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`feedback-filter__button${selectedPeriod === opt.value ? " is-active" : ""}`}
+              onClick={() => setSelectedPeriod(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 

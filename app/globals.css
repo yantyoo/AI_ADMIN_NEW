@@ -2649,12 +2649,12 @@ select.field__input {
 }
 
 .auth-standalone {
-  width: min(100%, 520px);
-  padding: 40px;
-  border: 1px solid rgba(220, 228, 242, 0.92);
-  border-radius: 26px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: var(--shadow-lg);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .auth-standalone__intro {

@@ -6,7 +6,7 @@ import type { TrendPoint } from "@/types/dashboard";
 
 type TrendChartProps = {
   points: TrendPoint[];
-  rangeLabel: string;
+  rangeNote: string;
 };
 
 type TooltipState = {
@@ -48,7 +48,7 @@ const buildTopRoundedBarPath = (x: number, y: number, rectWidth: number, rectHei
   ].join(" ");
 };
 
-export function TrendChart({ points, rangeLabel }: TrendChartProps) {
+export function TrendChart({ points, rangeNote }: TrendChartProps) {
   const [tooltip, setTooltip] = useState<TooltipState>(null);
 
   const visitorMax = Math.max(...points.map((point) => point.visitors), 1);
@@ -95,7 +95,7 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
             <span className="trend-chart__legend-dot" />
             <span>문의 수</span>
           </span>
-          <span className="trend-chart__legend-label">{rangeLabel} 기준</span>
+          <span className="trend-chart__legend-label">{rangeNote}</span>
         </div>
         <div className="trend-chart__empty">표시할 차트 데이터가 없습니다.</div>
       </div>
@@ -115,7 +115,7 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
           <span className="trend-chart__legend-dot" />
           <span>문의 수</span>
         </span>
-        <span className="trend-chart__legend-label">{rangeLabel} 기준</span>
+        <span className="trend-chart__legend-label">{rangeNote}</span>
       </div>
 
       <div className="trend-chart__stage">

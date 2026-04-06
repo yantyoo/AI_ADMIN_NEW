@@ -2,21 +2,18 @@ import type { TimeRange } from "@/types/dashboard";
 
 export const dashboardRangeLabels: Record<
   TimeRange,
-  { label: string; helper: string; axisLabel: string }
+  { label: string; note: string }
 > = {
   DAY: {
     label: "일간",
-    helper: "일간 기준",
-    axisLabel: "시간"
+    note: "오늘 기준 7일"
   },
   WEEK: {
     label: "주간",
-    helper: "주간 기준",
-    axisLabel: "날짜"
+    note: "이번주 기준 7주"
   },
   MONTH: {
     label: "월간",
-    helper: "월간 기준",
-    axisLabel: "주차"
+    note: "이번달 기준 7달"
   }
 };

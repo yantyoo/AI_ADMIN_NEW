@@ -11,8 +11,8 @@ type FeedbackRatioProps = {
 
 const reactionMeta: Record<FeedbackReaction, { label: string; tooltipLabel: string }> = {
   POSITIVE: {
-    label: "만족",
-    tooltipLabel: "만족"
+    label: "만족해요",
+    tooltipLabel: "만족해요"
   },
   NEGATIVE: {
     label: "아쉬워요",
@@ -69,7 +69,7 @@ export function FeedbackRatio({ data }: FeedbackRatioProps) {
   );
   const selectedSummary = data[selectedReaction === "POSITIVE" ? "positive" : "negative"];
   const hoveredSummary = hoveredReaction ? data[hoveredReaction === "POSITIVE" ? "positive" : "negative"] : null;
-  const keywordTitle = `${reactionMeta[selectedReaction].label} 키워드 Top 5`;
+  const keywordTitle = `${reactionMeta[selectedReaction].label} 키워드`;
   const keywordRangeLabel = `전체 ${selectedSummary.count.toLocaleString()}건 기준`;
 
   return (
@@ -82,7 +82,7 @@ export function FeedbackRatio({ data }: FeedbackRatioProps) {
             className="feedback-ratio__chart"
             viewBox={`0 0 ${VIEW_BOX} ${VIEW_BOX}`}
             role="img"
-            aria-label={`피드백 비율 도넛 차트. 만족 ${formatPercent(positivePercent)}, 아쉬워요 ${formatPercent(negativePercent)}`}
+            aria-label={`피드백 비율 도넛 차트. 만족해요 ${formatPercent(positivePercent)}, 아쉬워요 ${formatPercent(negativePercent)}`}
           >
             <path
               d={positiveSlice}
@@ -146,6 +146,7 @@ export function FeedbackRatio({ data }: FeedbackRatioProps) {
           title={keywordTitle}
           rangeLabel={keywordRangeLabel}
           items={selectedReaction === "POSITIVE" ? data.positive.keywords : data.negative.keywords}
+          bare
         />
       </div>
     </section>
