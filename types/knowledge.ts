@@ -40,4 +40,5 @@ export type KnowledgeTestHistory = {
   documentType: KnowledgeDocumentType;
   executedAt: string;
   verdict: KnowledgeVerdict | null;
+  memo: string | null;
 };

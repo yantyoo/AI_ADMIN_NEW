@@ -21,6 +21,12 @@ export const navItems: NavItem[] = [
     roles: ["MASTER"]
   },
   {
+    key: "cache-qa",
+    label: "캐시 답변 관리",
+    href: "/cache-qa",
+    roles: ["MASTER"]
+  },
+  {
     key: "knowledge",
     label: "지식 기반 조회",
     href: "/knowledge",
@@ -64,5 +70,9 @@ export const pageMetaByPath: Record<string, PageMeta> = {
   "/accounts": {
     title: "계정/권한 관리",
     description: "운영 계정과 권한 상태를 확인하는 화면입니다."
+  },
+  "/cache-qa": {
+    title: "캐시 답변 관리",
+    description: "캐시 응답을 질문과 답변 단위로 관리하는 화면입니다."
   }
 };

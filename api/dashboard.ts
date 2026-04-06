@@ -34,7 +34,7 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
       },
       {
         key: "inquiries",
-        label: "총 질문 수",
+        label: "문의 수",
         value: 326,
         policyText: "사용자 질문 발생 건수를 기준으로 집계합니다.",
         compareLabel: "전일 대비",
@@ -43,7 +43,7 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
       },
       {
         key: "failures",
-        label: "답변 실패 건",
+        label: "실패 수",
         value: 4,
         policyText: "실패 응답 발생 건수를 기준으로 집계합니다.",
         compareLabel: "전일 대비",
@@ -98,7 +98,7 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
       },
       {
         key: "inquiries",
-        label: "총 질문 수",
+        label: "문의 수",
         value: 1820,
         policyText: "사용자 질문 발생 건수를 기준으로 집계합니다.",
         compareLabel: "지난주 대비",
@@ -107,7 +107,7 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
       },
       {
         key: "failures",
-        label: "답변 실패 건",
+        label: "실패 수",
         value: 19,
         policyText: "실패 응답 발생 건수를 기준으로 집계합니다.",
         compareLabel: "지난주 대비",
@@ -162,7 +162,7 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
       },
       {
         key: "inquiries",
-        label: "총 질문 수",
+        label: "문의 수",
         value: 8014,
         policyText: "사용자 질문 발생 건수를 기준으로 집계합니다.",
         compareLabel: "전월 대비",
@@ -171,7 +171,7 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
       },
       {
         key: "failures",
-        label: "답변 실패 건",
+        label: "실패 수",
         value: 83,
         policyText: "실패 응답 발생 건수를 기준으로 집계합니다.",
         compareLabel: "전월 대비",

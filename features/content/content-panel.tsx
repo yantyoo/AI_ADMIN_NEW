@@ -28,12 +28,16 @@ const statusLabels: Record<ContentDocument["status"], string> = {
 
 const nowStamp = () => new Date().toLocaleString("sv-SE").slice(0, 16).replace("T", " ");
 
+const compareDocumentDesc = (left: ContentDocument, right: ContentDocument) =>
+  right.updatedAt.localeCompare(left.updatedAt) || right.createdAt.localeCompare(left.createdAt);
+
 export function ContentPanel({ documents }: ContentPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const initialDocuments = documents.slice().sort(compareDocumentDesc);
   const [filters, setFilters] = useState<ContentFilters>({ keyword: "", type: "ALL" });
   const [searchDraft, setSearchDraft] = useState("");
-  const [localDocuments, setLocalDocuments] = useState(documents);
-  const [selectedDocumentId, setSelectedDocumentId] = useState(documents[0]?.id ?? "");
+  const [localDocuments, setLocalDocuments] = useState(() => initialDocuments);
+  const [selectedDocumentId, setSelectedDocumentId] = useState(initialDocuments[0]?.id ?? "");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<UploadMode>("CREATE");
@@ -48,16 +52,19 @@ export function ContentPanel({ documents }: ContentPanelProps) {
   });
 
   const filteredDocuments = useMemo(() => {
-    return localDocuments.filter((document) => {
-      const keyword = filters.keyword.trim().toLowerCase();
-      const keywordMatch =
-        keyword.length === 0 ||
-        document.name.toLowerCase().includes(keyword) ||
-        document.path.toLowerCase().includes(keyword);
-      const typeMatch = filters.type === "ALL" || document.type === filters.type;
+    const keyword = filters.keyword.trim().toLowerCase();
 
-      return keywordMatch && typeMatch;
-    });
+    return localDocuments
+      .filter((document) => {
+        const keywordMatch =
+          keyword.length === 0 ||
+          document.name.toLowerCase().includes(keyword) ||
+          document.path.toLowerCase().includes(keyword);
+        const typeMatch = filters.type === "ALL" || document.type === filters.type;
+
+        return keywordMatch && typeMatch;
+      })
+      .sort(compareDocumentDesc);
   }, [filters.keyword, filters.type, localDocuments]);
 
   const selectedDocument =
@@ -115,7 +122,7 @@ export function ContentPanel({ documents }: ContentPanelProps) {
 
   const handleUploadSubmit = async () => {
     if (!canSubmitUpload) {
-      setErrorMessage("파일과 저장 경로를 입력해 주세요.");
+      setErrorMessage("파일과 경로를 모두 입력해 주세요.");
       return;
     }
 
@@ -123,47 +130,49 @@ export function ContentPanel({ documents }: ContentPanelProps) {
     const timestamp = nowStamp();
 
     if (uploadMode === "CREATE" || !editingDocumentId) {
-      setLocalDocuments((current) => [
-        {
-          ...submitted,
-          status: "ACTIVE",
-          createdAt: timestamp,
-          updatedAt: timestamp
-        },
-        ...current
-      ]);
+      const createdDocument: ContentDocument = {
+        ...submitted,
+        status: "ACTIVE" as const,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+      const nextDocuments = [createdDocument, ...localDocuments].sort(compareDocumentDesc);
+
+      setLocalDocuments(nextDocuments);
       setSelectedDocumentId(submitted.id);
       setUploadMessage("문서 업로드가 완료되었습니다.");
     } else {
       setLocalDocuments((current) =>
-        current.map((document) => {
-          if (document.id !== editingDocumentId) {
-            return document;
-          }
+        current
+          .map((document) => {
+            if (document.id !== editingDocumentId) {
+              return document;
+            }
 
-          const nextVersion = `v${document.history.length + 1}`;
+            const nextVersion = `v${document.history.length + 1}`;
 
-          return {
-            ...document,
-            name: submitted.name,
-            fileName: submitted.fileName,
-            path: submitted.path,
-            type: submitted.type,
-            status: "ACTIVE",
-            updatedAt: timestamp,
-            history: [
-              {
-                id: `hist-${Date.now()}`,
-                version: nextVersion,
-                actor: "관리자",
-                action: "수정",
-                reason: "기존 문서 수정 업로드",
-                occurredAt: timestamp
-              },
-              ...document.history
-            ]
-          };
-        })
+            return {
+              ...document,
+              name: submitted.name,
+              fileName: submitted.fileName,
+              path: submitted.path,
+              type: submitted.type,
+              status: "ACTIVE" as const,
+              updatedAt: timestamp,
+              history: [
+                {
+                  id: `hist-${Date.now()}`,
+                  version: nextVersion,
+                  actor: "관리자",
+                  action: "수정",
+                  reason: "기존 문서 수정 업로드",
+                  occurredAt: timestamp
+                },
+                ...document.history
+              ]
+            };
+          })
+          .sort(compareDocumentDesc)
       );
       setSelectedDocumentId(editingDocumentId);
       setUploadMessage("문서가 수정되었습니다.");
@@ -178,7 +187,9 @@ export function ContentPanel({ documents }: ContentPanelProps) {
     if (!selectedDocument) return;
 
     setLocalDocuments((current) => {
-      const nextDocuments = current.filter((document) => document.id !== selectedDocument.id);
+      const nextDocuments = current
+        .filter((document) => document.id !== selectedDocument.id)
+        .sort(compareDocumentDesc);
       setSelectedDocumentId(nextDocuments[0]?.id ?? "");
       return nextDocuments;
     });
@@ -208,7 +219,7 @@ export function ContentPanel({ documents }: ContentPanelProps) {
         <div className="panel__header panel__header--compact">
           <div>
             <h2 className="panel__title">문서 목록</h2>
-            <p className="panel__caption">RAG 문서를 검색하고 필터링할 수 있습니다.</p>
+            <p className="panel__caption">RAG 문서를 검색하고 업로드할 수 있습니다.</p>
           </div>
           <button type="button" className="primary-button" onClick={openCreateModal}>
             문서 업로드
@@ -223,7 +234,7 @@ export function ContentPanel({ documents }: ContentPanelProps) {
           }}
         >
           <label className="field">
-            <span className="field__label">문서유형</span>
+            <span className="field__label">문서 유형</span>
             <select
               className="field__input"
               value={filters.type}
@@ -267,8 +278,8 @@ export function ContentPanel({ documents }: ContentPanelProps) {
                     <th>문서명</th>
                     <th>유형</th>
                     <th>등록자</th>
-                    <th>등록일시</th>
-                    <th>최종 수정일</th>
+                    <th>등록시점</th>
+                    <th>최종 수정시점</th>
                     <th>상태</th>
                   </tr>
                 </thead>
@@ -332,11 +343,11 @@ export function ContentPanel({ documents }: ContentPanelProps) {
                     <dd>{selectedDocument.author}</dd>
                   </div>
                   <div>
-                    <dt>등록일시</dt>
+                    <dt>등록시점</dt>
                     <dd>{selectedDocument.createdAt}</dd>
                   </div>
                   <div>
-                    <dt>최종 수정일</dt>
+                    <dt>최종 수정시점</dt>
                     <dd>{selectedDocument.updatedAt}</dd>
                   </div>
                   <div>
@@ -373,7 +384,7 @@ export function ContentPanel({ documents }: ContentPanelProps) {
                 </section>
               </div>
             ) : (
-              <div className="content-empty content-empty--detail">선택된 문서가 없습니다.</div>
+              <div className="content-empty content-empty--detail">선택한 문서가 없습니다.</div>
             )}
           </aside>
         </div>
@@ -409,7 +420,7 @@ export function ContentPanel({ documents }: ContentPanelProps) {
                   onChange={(event) => handleFileChange(event.target.files?.[0])}
                 />
                 <span className="content-file-name">
-                  {selectedFileName ? `선택 파일: ${selectedFileName}` : "파일을 선택해 주세요."}
+                  {selectedFileName ? `선택한 파일: ${selectedFileName}` : "파일을 선택해 주세요."}
                 </span>
               </label>
 
@@ -477,7 +488,7 @@ export function ContentPanel({ documents }: ContentPanelProps) {
             </div>
             <div className="modal__body">
               <p className="content-confirm">
-                문서를 삭제하면 목록에서 사라집니다. 이 작업은 되돌릴 수 없습니다.
+                문서를 삭제하면 목록에서 사라집니다. 복구 작업은 별도로 제공되지 않습니다.
               </p>
             </div>
             <div className="modal__footer">

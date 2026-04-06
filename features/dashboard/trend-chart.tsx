@@ -66,9 +66,7 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
     });
   }, [points, ySpan]);
 
-  const linePath = coords
-    .map((coord, index) => `${index === 0 ? "M" : "L"} ${coord.x} ${coord.inquiryY}`)
-    .join(" ");
+  const linePath = coords.map((coord, index) => `${index === 0 ? "M" : "L"} ${coord.x} ${coord.inquiryY}`).join(" ");
 
   const updateTooltip = (event: MouseEvent<SVGElement>, point: TrendPoint) => {
     const svgRect = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
@@ -95,7 +93,7 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
           </span>
           <span className="trend-chart__legend-item">
             <span className="trend-chart__legend-dot" />
-            <span>질문 수</span>
+            <span>문의 수</span>
           </span>
           <span className="trend-chart__legend-label">{rangeLabel} 기준</span>
         </div>
@@ -115,7 +113,7 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
         </span>
         <span className="trend-chart__legend-item">
           <span className="trend-chart__legend-dot" />
-          <span>질문 수</span>
+          <span>문의 수</span>
         </span>
         <span className="trend-chart__legend-label">{rangeLabel} 기준</span>
       </div>
@@ -189,8 +187,8 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
             aria-live="polite"
           >
             <span className="trend-chart__tooltip-date">{tooltipPoint.dateLabel}</span>
-            <strong>{tooltipPoint.visitors.toLocaleString()}명 접속</strong>
-            <span>{tooltipPoint.inquiries.toLocaleString()}건 질문</span>
+            <strong>{tooltipPoint.visitors.toLocaleString()} 접속자</strong>
+            <span>{tooltipPoint.inquiries.toLocaleString()} 문의</span>
           </div>
         ) : null}
       </div>

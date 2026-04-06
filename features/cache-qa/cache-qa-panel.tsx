@@ -124,13 +124,6 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
     }
   }, [filteredItems, selectedId]);
 
-  useEffect(() => {
-    if (pagedItems.length === 0) return;
-    if (!selectedId || !pagedItems.some((item) => item.id === selectedId)) {
-      setSelectedId(pagedItems[0].id);
-    }
-  }, [pagedItems, selectedId]);
-
   const showMessage = (text: string) => {
     setMessage(text);
     setTimeout(() => setMessage(null), 2500);
@@ -190,7 +183,7 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
       const nextItem = await createCacheQaEntry(form);
       setItems((current) => [nextItem, ...current].sort(compareDateDesc));
       setSelectedId(nextItem.id);
-      showMessage("Q&A가 등록되었습니다.");
+      showMessage("답변이 등록되었습니다.");
       setForm(defaultForm);
       closeEditor();
       return;
@@ -210,7 +203,7 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
     const updated = await updateCacheQaEntry(currentItem, form);
     setItems((current) => current.map((item) => (item.id === editingId ? updated : item)).sort(compareDateDesc));
     setSelectedId(updated.id);
-    showMessage("Q&A가 수정되었습니다.");
+      showMessage("답변이 수정되었습니다.");
     setForm(defaultForm);
     setEditorMode("CREATE");
     setEditingId(null);
@@ -224,7 +217,7 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
     const updated = await toggleCacheQaEntryStatus(selectedItem, nextStatus);
     setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)).sort(compareDateDesc));
     setSelectedId(updated.id);
-    showMessage(nextStatus === "ACTIVE" ? "Q&A가 활성화되었습니다." : "Q&A가 비활성화되었습니다.");
+    showMessage(nextStatus === "ACTIVE" ? "답변이 활성화되었습니다." : "답변이 비활성화되었습니다.");
   };
 
   const handleDelete = () => {
@@ -236,7 +229,7 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
       return next;
     });
     setDeleteOpen(false);
-    showMessage("Q&A가 삭제되었습니다.");
+    showMessage("답변이 삭제되었습니다.");
     setEditorMode("CREATE");
     setEditingId(null);
     setForm(defaultForm);
@@ -250,11 +243,11 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
       <div className="cache-qa-grid">
         <ListPanel
           className="cache-qa-list-card"
-          title="Q&A 목록"
-          description="캐시 우선 응답에 사용하는 질문/답변을 관리합니다."
+          title="답변 목록"
+          description="캐시 우선 응답에 사용하는 질문과 답변을 관리합니다."
           actions={
             <button type="button" className="primary-button" onClick={openCreateEditor}>
-              Q&A 등록
+              답변 등록
             </button>
           }
           toolbar={
@@ -311,7 +304,7 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
         >
           <div className="list-panel__scroll cache-qa-list-scroll">
             {pagedItems.length === 0 ? (
-              <div className="list-panel__empty">조건에 맞는 Q&A가 없습니다.</div>
+              <div className="list-panel__empty">조건에 맞는 답변이 없습니다.</div>
             ) : (
               <table className="content-table cache-qa-table">
                 <thead>
@@ -420,7 +413,7 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
               </div>
             ) : (
               <div className="list-panel__empty cache-qa-empty">
-                Q&A를 선택하면 상세 정보가 표시됩니다.
+                답변을 선택하면 상세 정보가 표시됩니다.
               </div>
             )}
           </section>
@@ -433,11 +426,11 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
             className="modal modal--compact"
             role="dialog"
             aria-modal="true"
-            aria-label={editorMode === "EDIT" ? "Q&A 수정" : "Q&A 등록"}
+            aria-label={editorMode === "EDIT" ? "답변 수정" : "답변 등록"}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="modal__header">
-              <h3>{editorMode === "EDIT" ? "Q&A 수정" : "Q&A 등록"}</h3>
+              <h3>{editorMode === "EDIT" ? "답변 수정" : "답변 등록"}</h3>
               <button type="button" className="icon-button" onClick={closeEditor}>
                 ✕
               </button>
@@ -527,17 +520,17 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
             className="modal modal--compact"
             role="dialog"
             aria-modal="true"
-            aria-label="Q&A 삭제 확인"
+            aria-label="답변 삭제 확인"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="modal__header">
-              <h3>Q&A 삭제 확인</h3>
+              <h3>답변 삭제 확인</h3>
               <button type="button" className="icon-button" onClick={() => setDeleteOpen(false)}>
                 ✕
               </button>
             </div>
             <div className="modal__body">
-              <p className="content-confirm">선택한 Q&A를 삭제하면 캐시 응답에서 즉시 제외됩니다.</p>
+              <p className="content-confirm">선택한 답변을 삭제하면 캐시 응답에서 즉시 제외됩니다.</p>
             </div>
             <div className="modal__footer modal__footer--split">
               <button type="button" className="secondary-button" onClick={() => setDeleteOpen(false)}>

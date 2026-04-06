@@ -91,5 +91,5 @@ const feedbackDetails: FeedbackDetail[] = [
 ];
 
 export async function getFeedbacks(): Promise<FeedbackDetail[]> {
-  return feedbackDetails;
+  return feedbackDetails.slice().sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }

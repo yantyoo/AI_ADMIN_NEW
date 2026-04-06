@@ -52,7 +52,7 @@ export function AdminShell({
 
   return (
     <div className="admin-shell">
-      <Sidebar pathname={currentPath} />
+      <Sidebar />
       <div className="admin-shell__main">
         <TopHeader title={pageMeta.title} description={pageMeta.description} />
         <main className="admin-shell__content">{children}</main>

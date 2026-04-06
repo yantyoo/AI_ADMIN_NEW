@@ -100,7 +100,9 @@ export const contentDocumentsSeed: ContentDocument[] = [
 ];
 
 export async function getContentDocuments(): Promise<ContentDocument[]> {
-  return contentDocumentsSeed;
+  return contentDocumentsSeed.slice().sort((left, right) => {
+    return right.updatedAt.localeCompare(left.updatedAt) || right.createdAt.localeCompare(left.createdAt);
+  });
 }
 
 export async function uploadContentDocument(input: {
