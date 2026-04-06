@@ -2,12 +2,25 @@
 
 import { useMemo, useRef, useState } from "react";
 import { uploadContentDocument } from "@/api/content";
+import { DetailFrame } from "@/components/layout/detail-frame";
+import { SectionHeader } from "@/components/layout/section-header";
+import { ModalDialog } from "@/components/ui/modal-dialog";
+import { ToastStack } from "@/components/ui/toast-stack";
+import { useAutoDismissMessage } from "@/hooks/use-auto-dismiss-message";
+import {
+  CONTENT_DOCUMENT_STATUS_LABELS,
+  CONTENT_DOCUMENT_TYPE_OPTIONS,
+  CONTENT_TOAST_DISMISS_MS,
+  CONTENT_UPLOAD_FILE_ACCEPT,
+  DEFAULT_CONTENT_UPLOAD_FORM
+} from "@/constants/content";
 import type {
   ContentDocument,
   ContentDocumentType,
   ContentFilters,
   ContentUploadForm
 } from "@/types/content";
+import { compareStringDesc } from "@/utils/text";
 
 type ContentPanelProps = {
   documents: ContentDocument[];
@@ -15,21 +28,9 @@ type ContentPanelProps = {
 
 type UploadMode = "CREATE" | "EDIT";
 
-const typeOptions: Array<{ label: string; value: ContentDocumentType | "ALL" }> = [
-  { label: "전체", value: "ALL" },
-  { label: "매뉴얼", value: "MANUAL" },
-  { label: "FAQ", value: "FAQ" }
-];
-
-const statusLabels: Record<ContentDocument["status"], string> = {
-  ACTIVE: "정상",
-  FAILED: "실패"
-};
-
-const nowStamp = () => new Date().toLocaleString("sv-SE").slice(0, 16).replace("T", " ");
-
 const compareDocumentDesc = (left: ContentDocument, right: ContentDocument) =>
-  right.updatedAt.localeCompare(left.updatedAt) || right.createdAt.localeCompare(left.createdAt);
+  compareStringDesc(left.updatedAt, right.updatedAt) ||
+  compareStringDesc(left.createdAt, right.createdAt);
 
 export function ContentPanel({ documents }: ContentPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -42,14 +43,10 @@ export function ContentPanel({ documents }: ContentPanelProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<UploadMode>("CREATE");
   const [editingDocumentId, setEditingDocumentId] = useState<string | null>(null);
-  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const uploadMessageState = useAutoDismissMessage(CONTENT_TOAST_DISMISS_MS);
+  const errorMessageState = useAutoDismissMessage(CONTENT_TOAST_DISMISS_MS);
   const [selectedFileName, setSelectedFileName] = useState("");
-  const [uploadForm, setUploadForm] = useState<ContentUploadForm>({
-    fileName: "",
-    path: "",
-    type: "MANUAL"
-  });
+  const [uploadForm, setUploadForm] = useState<ContentUploadForm>(DEFAULT_CONTENT_UPLOAD_FORM);
 
   const filteredDocuments = useMemo(() => {
     const keyword = filters.keyword.trim().toLowerCase();
@@ -81,12 +78,17 @@ export function ContentPanel({ documents }: ContentPanelProps) {
     setFilters((current) => ({ ...current, keyword: searchDraft.trim() }));
   };
 
+  const resetSearch = () => {
+    setSearchDraft("");
+    setFilters((current) => ({ ...current, keyword: "", type: "ALL" }));
+  };
+
   const openCreateModal = () => {
     setUploadMode("CREATE");
     setEditingDocumentId(null);
-    setUploadForm({ fileName: "", path: "", type: "MANUAL" });
+    setUploadForm(DEFAULT_CONTENT_UPLOAD_FORM);
     setSelectedFileName("");
-    setErrorMessage(null);
+    errorMessageState.clearMessage();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -104,7 +106,7 @@ export function ContentPanel({ documents }: ContentPanelProps) {
       type: selectedDocument.type
     });
     setSelectedFileName(selectedDocument.fileName);
-    setErrorMessage(null);
+    errorMessageState.clearMessage();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -122,12 +124,12 @@ export function ContentPanel({ documents }: ContentPanelProps) {
 
   const handleUploadSubmit = async () => {
     if (!canSubmitUpload) {
-      setErrorMessage("파일과 경로를 모두 입력해 주세요.");
+      errorMessageState.showMessage("파일과 경로를 모두 입력해 주세요.");
       return;
     }
 
     const submitted = await uploadContentDocument(uploadForm);
-    const timestamp = nowStamp();
+    const timestamp = new Date().toLocaleString("sv-SE").slice(0, 16).replace("T", " ");
 
     if (uploadMode === "CREATE" || !editingDocumentId) {
       const createdDocument: ContentDocument = {
@@ -140,7 +142,7 @@ export function ContentPanel({ documents }: ContentPanelProps) {
 
       setLocalDocuments(nextDocuments);
       setSelectedDocumentId(submitted.id);
-      setUploadMessage("문서 업로드가 완료되었습니다.");
+      uploadMessageState.showMessage("문서 업로드가 완료되었습니다.");
     } else {
       setLocalDocuments((current) =>
         current
@@ -175,12 +177,12 @@ export function ContentPanel({ documents }: ContentPanelProps) {
           .sort(compareDocumentDesc)
       );
       setSelectedDocumentId(editingDocumentId);
-      setUploadMessage("문서가 수정되었습니다.");
+      uploadMessageState.showMessage("문서가 수정되었습니다.");
     }
 
-    setErrorMessage(null);
+    errorMessageState.clearMessage();
     closeUploadModal();
-    setUploadForm({ fileName: "", path: "", type: "MANUAL" });
+    setUploadForm(DEFAULT_CONTENT_UPLOAD_FORM);
   };
 
   const handleDelete = () => {
@@ -194,12 +196,12 @@ export function ContentPanel({ documents }: ContentPanelProps) {
       return nextDocuments;
     });
     setIsDeleteOpen(false);
-    setUploadMessage("문서 삭제가 완료되었습니다.");
+    uploadMessageState.showMessage("문서 삭제가 완료되었습니다.");
   };
 
   const handleDownload = () => {
     if (!selectedDocument) return;
-    setUploadMessage("문서 다운로드를 준비했습니다.");
+    uploadMessageState.showMessage("문서 다운로드를 준비했습니다.");
   };
 
   const handleFileChange = (file: File | undefined) => {
@@ -213,248 +215,219 @@ export function ContentPanel({ documents }: ContentPanelProps) {
     setUploadForm((current) => ({ ...current, fileName: file.name }));
   };
 
+  const toastItems = [
+    ...(uploadMessageState.message
+      ? [{ key: "content-success", tone: "success" as const, message: uploadMessageState.message }]
+      : []),
+    ...(errorMessageState.message
+      ? [{ key: "content-error", tone: "error" as const, message: errorMessageState.message }]
+      : [])
+  ];
+
   return (
-    <div className="content-layout">
-      <section className="panel panel--main">
-        <div className="panel__header panel__header--compact">
-          <div>
-            <h2 className="panel__title">문서 목록</h2>
-            <p className="panel__caption">RAG 문서를 검색하고 업로드할 수 있습니다.</p>
-          </div>
-          <button type="button" className="primary-button" onClick={openCreateModal}>
-            문서 업로드
-          </button>
-        </div>
+    <div className="page-content page-content--fill content-page">
+      <ToastStack items={toastItems} />
 
-        <form
-          className="content-toolbar content-toolbar--content"
-          onSubmit={(event) => {
-            event.preventDefault();
-            applySearch();
-          }}
-        >
-          <label className="field">
-            <span className="field__label">문서 유형</span>
-            <select
-              className="field__input"
-              value={filters.type}
-              onChange={(event) =>
-                setFilters((current) => ({
-                  ...current,
-                  type: event.target.value as ContentDocumentType | "ALL"
-                }))
-              }
-            >
-              {typeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="field">
-            <span className="field__label">문서명 검색</span>
-            <input
-              className="field__input"
-              type="search"
-              value={searchDraft}
-              onChange={(event) => setSearchDraft(event.target.value)}
-              placeholder="2자 이상 입력"
-            />
-          </label>
-
-          <button type="submit" className="primary-button content-toolbar__button">
-            검색
-          </button>
-        </form>
-
-        <div className="content-grid">
-          <section className="content-table-card">
-            <div className="content-table-scroll">
-              <table className="content-table">
-                <thead>
-                  <tr>
-                    <th>문서명</th>
-                    <th>유형</th>
-                    <th>등록자</th>
-                    <th>등록시점</th>
-                    <th>최종 수정시점</th>
-                    <th>상태</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDocuments.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="content-empty">
-                        조건에 맞는 문서가 없습니다.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredDocuments.map((document) => (
-                      <tr
-                        key={document.id}
-                        className={document.id === selectedDocument?.id ? "is-selected" : ""}
-                        onClick={() => setSelectedDocumentId(document.id)}
-                      >
-                        <td>
-                          <div className="content-table__title">{document.name}</div>
-                          <div className="content-table__sub">{document.path}</div>
-                        </td>
-                        <td>{document.type === "MANUAL" ? "매뉴얼" : "FAQ"}</td>
-                        <td>{document.author}</td>
-                        <td>{document.createdAt}</td>
-                        <td>{document.updatedAt}</td>
-                        <td>
-                          <span className={`status-badge status-badge--${document.status.toLowerCase()}`}>
-                            {statusLabels[document.status]}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <aside className="content-detail-card">
-            {selectedDocument ? (
-              <div className="content-detail-scroll">
-                <div className="content-detail__header">
-                  <div>
-                    <h3 className="content-detail__title">{selectedDocument.name}</h3>
-                    <p className="content-detail__caption">
-                      {selectedDocument.type === "MANUAL" ? "매뉴얼" : "FAQ"} · {selectedDocument.fileName}
-                    </p>
-                  </div>
-                  <span className={`status-badge status-badge--${selectedDocument.status.toLowerCase()}`}>
-                    {statusLabels[selectedDocument.status]}
-                  </span>
-                </div>
-
-                <dl className="content-detail__list">
-                  <div>
-                    <dt>저장 경로</dt>
-                    <dd>{selectedDocument.path}</dd>
-                  </div>
-                  <div>
-                    <dt>등록자</dt>
-                    <dd>{selectedDocument.author}</dd>
-                  </div>
-                  <div>
-                    <dt>등록시점</dt>
-                    <dd>{selectedDocument.createdAt}</dd>
-                  </div>
-                  <div>
-                    <dt>최종 수정시점</dt>
-                    <dd>{selectedDocument.updatedAt}</dd>
-                  </div>
-                  <div>
-                    <dt>파일 크기</dt>
-                    <dd>{selectedDocument.fileSize}</dd>
-                  </div>
-                </dl>
-
-                <div className="content-detail-actions">
-                  <button type="button" className="secondary-button" onClick={handleDownload}>
-                    다운로드
-                  </button>
-                  <button type="button" className="secondary-button" onClick={openEditModal}>
-                    수정
-                  </button>
-                  <button type="button" className="danger-button" onClick={() => setIsDeleteOpen(true)}>
-                    삭제
-                  </button>
-                </div>
-
-                <section className="content-history">
-                  <h4>변경 이력</h4>
-                  <ul>
-                    {selectedDocument.history.map((item) => (
-                      <li key={item.id}>
-                        <strong>{item.version}</strong>
-                        <span>
-                          {item.actor} · {item.action} · {item.occurredAt}
-                        </span>
-                        <p>{item.reason}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              </div>
-            ) : (
-              <div className="content-empty content-empty--detail">선택한 문서가 없습니다.</div>
-            )}
-          </aside>
-        </div>
-
-        {uploadMessage ? <p className="content-message">{uploadMessage}</p> : null}
-        {errorMessage ? <p className="content-error">{errorMessage}</p> : null}
-      </section>
-
-      {isUploadOpen ? (
-        <div className="modal-backdrop" role="presentation" onClick={closeUploadModal}>
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={uploadMode === "EDIT" ? "문서 수정 업로드" : "문서 업로드"}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal__header">
-              <h3>{uploadMode === "EDIT" ? "문서 수정 업로드" : "문서 업로드"}</h3>
-              <button type="button" className="icon-button" onClick={closeUploadModal}>
-                ×
+      <div className="content-grid">
+        <section className="content-table-card">
+          <SectionHeader
+            title="문서 목록"
+            actions={
+              <button type="button" className="primary-button" onClick={openCreateModal}>
+                문서 업로드
               </button>
-            </div>
-
-            <div className="modal__body">
-              <label className="field">
-                <span className="field__label">파일 선택 *</span>
-                <input
-                  ref={fileInputRef}
-                  className="field__input content-file-input"
-                  type="file"
-                  accept=".pdf,.docx,.txt,.md"
-                  onChange={(event) => handleFileChange(event.target.files?.[0])}
-                />
-                <span className="content-file-name">
-                  {selectedFileName ? `선택한 파일: ${selectedFileName}` : "파일을 선택해 주세요."}
-                </span>
-              </label>
-
-              <label className="field">
-                <span className="field__label">저장 경로</span>
-                <input
-                  className="field__input"
-                  value={uploadForm.path}
-                  onChange={(event) =>
-                    setUploadForm((current) => ({ ...current, path: event.target.value }))
-                  }
-                  placeholder="/rag/manual/chatbot-guide"
-                />
-              </label>
-
-              <label className="field">
+            }
+            className="content-table-card__header content-table-card__header--list"
+          />
+            <form
+            className="content-toolbar content-toolbar--content content-table-card__toolbar"
+            onSubmit={(event) => {
+              event.preventDefault();
+              applySearch();
+            }}
+          >
+            <label className="field content-toolbar__field content-toolbar__field--select">
                 <span className="field__label">문서 유형</span>
                 <select
                   className="field__input"
-                  value={uploadForm.type}
+                  value={filters.type}
                   onChange={(event) =>
-                    setUploadForm((current) => ({
+                    setFilters((current) => ({
                       ...current,
-                      type: event.target.value as ContentDocumentType
+                      type: event.target.value as ContentDocumentType | "ALL"
                     }))
                   }
                 >
-                  <option value="MANUAL">매뉴얼</option>
-                  <option value="FAQ">FAQ</option>
-                </select>
-              </label>
-            </div>
+                {CONTENT_DOCUMENT_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-            <div className="modal__footer">
+            <label className="field content-toolbar__field content-toolbar__field--search">
+              <span className="field__label">문서명 검색</span>
+              <input
+                className="field__input"
+                type="search"
+                value={searchDraft}
+                onChange={(event) => setSearchDraft(event.target.value)}
+                placeholder="2자 이상 입력"
+              />
+            </label>
+
+            <div className="content-toolbar__actions">
+              <button type="submit" className="primary-button content-toolbar__button">
+                검색
+              </button>
+              <button
+                type="button"
+                className="secondary-button content-toolbar__button"
+                onClick={resetSearch}
+              >
+                초기화
+              </button>
+            </div>
+          </form>
+
+          <div className="content-table-scroll">
+            <table className="content-table">
+              <thead>
+                <tr>
+                  <th>문서명</th>
+                  <th>유형</th>
+                  <th>등록자</th>
+                  <th>등록일</th>
+                  <th>수정일</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDocuments.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="content-empty">
+                      조건에 맞는 문서가 없습니다.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredDocuments.map((document) => (
+                    <tr
+                      key={document.id}
+                      className={document.id === selectedDocument?.id ? "is-selected" : ""}
+                      onClick={() => setSelectedDocumentId(document.id)}
+                    >
+                      <td>
+                        <div className="content-table__title">{document.name}</div>
+                        <div className="content-table__sub">{document.path}</div>
+                      </td>
+                      <td>{document.type === "MANUAL" ? "매뉴얼" : "FAQ"}</td>
+                      <td>{document.author}</td>
+                      <td>{document.createdAt}</td>
+                      <td>{document.updatedAt}</td>
+                      <td>
+                        <span className={`status-badge status-badge--${document.status.toLowerCase()}`}>
+                          {CONTENT_DOCUMENT_STATUS_LABELS[document.status]}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <DetailFrame
+          className="content-detail-card"
+          title="문서 상세"
+          actions={
+            selectedDocument ? (
+              <span className={`status-badge status-badge--${selectedDocument.status.toLowerCase()}`}>
+                {CONTENT_DOCUMENT_STATUS_LABELS[selectedDocument.status]}
+              </span>
+            ) : null
+          }
+        >
+          {selectedDocument ? (
+            <div className="content-detail-scroll">
+              <div className="content-detail__name-card">
+                <div className="content-detail__identity">
+                  <h3 className="content-detail__title">{selectedDocument.name}</h3>
+                  <span className="content-detail__type-pill">
+                    {selectedDocument.type === "MANUAL" ? "매뉴얼" : "FAQ"}
+                  </span>
+                </div>
+              </div>
+
+              <dl className="content-detail__list">
+                <div>
+                  <dt>저장 경로</dt>
+                  <dd>{selectedDocument.path}</dd>
+                </div>
+                <div>
+                  <dt>파일 크기</dt>
+                  <dd>{selectedDocument.fileSize}</dd>
+                </div>
+                <div>
+                  <dt>등록자</dt>
+                  <dd>{selectedDocument.author}</dd>
+                </div>
+                <div>
+                  <dt>등록일</dt>
+                  <dd>{selectedDocument.createdAt}</dd>
+                </div>
+                <div>
+                  <dt>수정자</dt>
+                  <dd>{selectedDocument.history[0]?.actor ?? selectedDocument.author}</dd>
+                </div>
+                <div>
+                  <dt>수정일</dt>
+                  <dd>{selectedDocument.updatedAt}</dd>
+                </div>
+              </dl>
+
+              <div className="content-detail-actions">
+                <button type="button" className="secondary-button" onClick={handleDownload}>
+                  다운로드
+                </button>
+                <button type="button" className="secondary-button" onClick={openEditModal}>
+                  수정
+                </button>
+                <button type="button" className="danger-button" onClick={() => setIsDeleteOpen(true)}>
+                  삭제
+                </button>
+              </div>
+
+              <section className="content-history">
+                <h4>변경 이력</h4>
+                <ul>
+                  {selectedDocument.history.map((item) => (
+                    <li key={item.id}>
+                      <strong>{item.version}</strong>
+                      <span>
+                        {item.actor} · {item.action} · {item.occurredAt}
+                      </span>
+                      <p>{item.reason}</p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+          ) : (
+            <div className="content-empty content-empty--detail">선택한 문서가 없습니다.</div>
+          )}
+        </DetailFrame>
+      </div>
+
+      {isUploadOpen ? (
+        <ModalDialog
+          title={uploadMode === "EDIT" ? "문서 수정 업로드" : "문서 업로드"}
+          ariaLabel={uploadMode === "EDIT" ? "문서 수정 업로드" : "문서 업로드"}
+          onClose={closeUploadModal}
+          size="lg"
+          footer={
+            <>
               <button type="button" className="secondary-button" onClick={closeUploadModal}>
                 취소
               </button>
@@ -466,41 +439,75 @@ export function ContentPanel({ documents }: ContentPanelProps) {
               >
                 {uploadMode === "EDIT" ? "수정 저장" : "저장"}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <label className="field">
+            <span className="field__label">파일 선택 *</span>
+            <input
+              ref={fileInputRef}
+              className="field__input content-file-input"
+              type="file"
+              accept={CONTENT_UPLOAD_FILE_ACCEPT}
+              onChange={(event) => handleFileChange(event.target.files?.[0])}
+            />
+            <span className="content-file-name">
+              {selectedFileName ? `선택한 파일: ${selectedFileName}` : "파일을 선택해 주세요."}
+            </span>
+          </label>
+
+          <label className="field">
+            <span className="field__label">저장 경로</span>
+            <input
+              className="field__input"
+              value={uploadForm.path}
+              onChange={(event) =>
+                setUploadForm((current) => ({ ...current, path: event.target.value }))
+              }
+              placeholder="/rag/manual/chatbot-guide"
+            />
+          </label>
+
+          <label className="field">
+            <span className="field__label">문서 유형</span>
+            <select
+              className="field__input"
+              value={uploadForm.type}
+              onChange={(event) =>
+                setUploadForm((current) => ({
+                  ...current,
+                  type: event.target.value as ContentDocumentType
+                }))
+              }
+            >
+              <option value="MANUAL">매뉴얼</option>
+              <option value="FAQ">FAQ</option>
+            </select>
+          </label>
+        </ModalDialog>
       ) : null}
 
       {isDeleteOpen ? (
-        <div className="modal-backdrop" role="presentation" onClick={() => setIsDeleteOpen(false)}>
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="문서 삭제 확인"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal__header">
-              <h3>문서 삭제 확인</h3>
-              <button type="button" className="icon-button" onClick={() => setIsDeleteOpen(false)}>
-                ×
-              </button>
-            </div>
-            <div className="modal__body">
-              <p className="content-confirm">
-                문서를 삭제하면 목록에서 사라집니다. 복구 작업은 별도로 제공되지 않습니다.
-              </p>
-            </div>
-            <div className="modal__footer">
+        <ModalDialog
+          title="문서 삭제 확인"
+          ariaLabel="문서 삭제 확인"
+          onClose={() => setIsDeleteOpen(false)}
+          size="sm"
+          footer={
+            <>
               <button type="button" className="secondary-button" onClick={() => setIsDeleteOpen(false)}>
                 취소
               </button>
               <button type="button" className="danger-button" onClick={handleDelete}>
                 삭제
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="content-confirm">
+            문서를 삭제하면 목록에서 사라집니다. 복구 작업은 별도로 제공되지 않습니다.
+          </p>
+        </ModalDialog>
       ) : null}
     </div>
   );

@@ -3,8 +3,18 @@
 import { useMemo, useState } from "react";
 import type { AccountDetail, AccountStatus, UserCandidate } from "@/types/accounts";
 import { userCandidates as allCandidates } from "@/api/accounts";
-
-const CURRENT_USER_ID = "chat1004";
+import { DetailFrame } from "@/components/layout/detail-frame";
+import { SectionHeader } from "@/components/layout/section-header";
+import { ModalDialog } from "@/components/ui/modal-dialog";
+import { ToastStack } from "@/components/ui/toast-stack";
+import { useAutoDismissMessage } from "@/hooks/use-auto-dismiss-message";
+import {
+  ACCOUNT_ACTION_TITLES,
+  ACCOUNT_ROLE_LABELS,
+  ACCOUNT_STATUS_LABELS,
+  ACCOUNT_TOAST_DISMISS_MS,
+  CURRENT_ACCOUNT_ID
+} from "@/constants/accounts";
 
 type AccountsPanelProps = {
   accounts: AccountDetail[];
@@ -18,23 +28,6 @@ type ActionModal = {
   reason: string;
 } | null;
 
-const statusLabels: Record<AccountDetail["status"], string> = {
-  ACTIVE: "활성",
-  INACTIVE: "비활성",
-  LOCKED: "잠금"
-};
-
-const roleLabels: Record<AccountDetail["role"], string> = {
-  MASTER: "MASTER",
-  OPERATOR: "OPERATOR"
-};
-
-const actionTitles: Record<ActionModalType, string> = {
-  ACTIVATE: "권한 복구",
-  DEACTIVATE: "권한 비활성화",
-  UNLOCK: "잠금 해제"
-};
-
 export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps) {
   const [accounts, setAccounts] = useState(initialAccounts);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -43,7 +36,7 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
   const [addReason, setAddReason] = useState("");
   const [addSearch, setAddSearch] = useState("");
   const [addSelectedCandidate, setAddSelectedCandidate] = useState<UserCandidate | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const successMessage = useAutoDismissMessage(ACCOUNT_TOAST_DISMISS_MS);
 
   const stats = useMemo(
     () => ({
@@ -69,11 +62,6 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
     );
   }, [addSearch]);
 
-  const showMessage = (message: string) => {
-    setSuccessMessage(message);
-    setTimeout(() => setSuccessMessage(null), 3000);
-  };
-
   const applyStatus = (accountId: string, status: AccountStatus) => {
     setAccounts((prev) => prev.map((account) => (account.id === accountId ? { ...account, status } : account)));
     setSelectedId(accountId);
@@ -85,13 +73,13 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
     const { type, accountId } = actionModal;
     if (type === "ACTIVATE") {
       applyStatus(accountId, "ACTIVE");
-      showMessage("관리자 권한이 복구되었습니다.");
+      successMessage.showMessage("관리자 권한이 복구되었습니다.");
     } else if (type === "DEACTIVATE") {
       applyStatus(accountId, "INACTIVE");
-      showMessage("관리자 권한이 비활성화되었습니다.");
+      successMessage.showMessage("관리자 권한이 비활성화되었습니다.");
     } else if (type === "UNLOCK") {
       applyStatus(accountId, "ACTIVE");
-      showMessage("계정 잠금이 해제되었습니다.");
+      successMessage.showMessage("계정 잠금이 해제되었습니다.");
     }
 
     setActionModal(null);
@@ -120,21 +108,27 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
 
     setAccounts((prev) => [...prev, newAccount]);
     closeAddModal();
-    showMessage("관리자가 추가되었습니다.");
+    successMessage.showMessage("관리자가 추가되었습니다.");
   };
 
-  const isSelf = (id: string) => id === CURRENT_USER_ID;
+  const isSelf = (id: string) => id === CURRENT_ACCOUNT_ID;
 
   const statCards = [
-    { label: "전체 활성", value: stats.total },
-    { label: "MASTER", value: stats.masters },
-    { label: "OPERATOR", value: stats.operators },
-    { label: "비활성·잠금", value: stats.inactive }
+    { label: "전체 활성", value: `${stats.total}명` },
+    { label: "MASTER", value: `${stats.masters}명` },
+    { label: "OPERATOR", value: `${stats.operators}명` },
+    { label: "비활성·잠금", value: `${stats.inactive}명` }
   ];
 
   return (
     <div className="accounts-layout">
-      {successMessage && <p className="content-message">{successMessage}</p>}
+      <ToastStack
+        items={
+          successMessage.message
+            ? [{ key: "accounts-success", tone: "success" as const, message: successMessage.message }]
+            : []
+        }
+      />
 
       <div className="accounts-stat-grid">
         {statCards.map((card) => (
@@ -147,12 +141,15 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
 
       <div className="accounts-grid">
         <section className="accounts-list-card">
-          <div className="panel__header panel__header--compact">
-            <h2 className="panel__title">관리자 목록</h2>
-            <button type="button" className="primary-button" onClick={() => setAddModalOpen(true)}>
-              관리자 추가
-            </button>
-          </div>
+          <SectionHeader
+            title="관리자 목록"
+            actions={
+              <button type="button" className="primary-button" onClick={() => setAddModalOpen(true)}>
+                관리자 추가
+              </button>
+            }
+            className="panel__header panel__header--compact"
+          />
 
           <div className="accounts-list-scroll">
             <table className="content-table knowledge-history-table">
@@ -181,12 +178,12 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
                       <span
                         className={`status-badge ${account.role === "MASTER" ? "status-badge--active" : "status-badge--processing"}`}
                       >
-                        {roleLabels[account.role]}
+                        {ACCOUNT_ROLE_LABELS[account.role]}
                       </span>
                     </td>
                     <td>
                       <span className={`status-badge status-badge--${account.status.toLowerCase()}`}>
-                        {statusLabels[account.status]}
+                        {ACCOUNT_STATUS_LABELS[account.status]}
                       </span>
                     </td>
                     <td>{account.lastLoginAt ?? "-"}</td>
@@ -197,22 +194,34 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
           </div>
         </section>
 
-        <aside className="accounts-detail-card">
+        <DetailFrame
+          className="accounts-detail-card"
+          title="관리자 상세"
+          actions={
+            selected ? (
+              <span className={`status-badge status-badge--${selected.status.toLowerCase()}`}>
+                {ACCOUNT_STATUS_LABELS[selected.status]}
+              </span>
+            ) : null
+          }
+        >
           {selected === null ? (
             <div className="content-empty content-empty--detail">관리자를 선택하면 상세 정보가 표시됩니다.</div>
           ) : (
             <div className="accounts-detail-scroll">
-              <div className="content-detail__header">
-                <div>
-                  <h3 className="content-detail__title">{selected.name}</h3>
-                  <p className="content-detail__caption">
-                    {selected.id} · {roleLabels[selected.role]}
-                  </p>
-                </div>
-                <span className={`status-badge status-badge--${selected.status.toLowerCase()}`}>
-                  {statusLabels[selected.status]}
-                </span>
-              </div>
+              <SectionHeader
+                title={
+                  <div className="accounts-detail-identity">
+                    <span className="accounts-detail-identity__name">{selected.name}</span>
+                    <div className="accounts-detail-identity__meta">
+                      <span className="accounts-detail-identity__id">{selected.id}</span>
+                      <span className="accounts-detail-identity__role">{ACCOUNT_ROLE_LABELS[selected.role]}</span>
+                    </div>
+                  </div>
+                }
+                className="detail-frame__header accounts-detail-identity-header"
+                titleAs="h3"
+              />
 
               <dl className="content-detail__list">
                 <div>
@@ -308,37 +317,17 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
               </div>
             </div>
           )}
-        </aside>
+        </DetailFrame>
       </div>
 
       {actionModal && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setActionModal(null)}>
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={actionTitles[actionModal.type]}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal__header">
-              <h3>{actionTitles[actionModal.type]}</h3>
-              <button type="button" className="icon-button" onClick={() => setActionModal(null)}>
-                ×
-              </button>
-            </div>
-            <div className="modal__body">
-              <label className="field">
-                <span className="field__label">사유 입력 *</span>
-                <textarea
-                  className="field__input knowledge-textarea"
-                  rows={3}
-                  value={actionModal.reason}
-                  placeholder="사유를 입력해 주세요."
-                  onChange={(event) => setActionModal({ ...actionModal, reason: event.target.value })}
-                />
-              </label>
-            </div>
-            <div className="modal__footer">
+        <ModalDialog
+          title={ACCOUNT_ACTION_TITLES[actionModal.type]}
+          ariaLabel={ACCOUNT_ACTION_TITLES[actionModal.type]}
+          onClose={() => setActionModal(null)}
+          size="sm"
+          footer={
+            <>
               <button type="button" className="secondary-button" onClick={() => setActionModal(null)}>
                 취소
               </button>
@@ -350,75 +339,30 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
               >
                 확인
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <label className="field">
+            <span className="field__label">사유 입력 *</span>
+            <textarea
+              className="field__input knowledge-textarea"
+              rows={3}
+              value={actionModal.reason}
+              placeholder="사유를 입력해 주세요."
+              onChange={(event) => setActionModal({ ...actionModal, reason: event.target.value })}
+            />
+          </label>
+        </ModalDialog>
       )}
 
       {addModalOpen && (
-        <div className="modal-backdrop" role="presentation" onClick={closeAddModal}>
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="관리자 추가"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal__header">
-              <h3>관리자 추가</h3>
-              <button type="button" className="icon-button" onClick={closeAddModal}>
-                ×
-              </button>
-            </div>
-
-            <div className="modal__body">
-              <label className="field">
-                <span className="field__label">사용자 검색 (이름, 아이디, 단지코드)</span>
-                <input
-                  className="field__input"
-                  value={addSearch}
-                  placeholder="검색어 입력"
-                  onChange={(event) => setAddSearch(event.target.value)}
-                />
-              </label>
-
-              <ul className="user-candidate-list">
-                {filteredCandidates.length === 0 ? (
-                  <li className="user-candidate-empty">검색 결과가 없습니다.</li>
-                ) : (
-                  filteredCandidates.map((candidate) => (
-                    <li key={candidate.id}>
-                      <button
-                        type="button"
-                        className={`user-candidate-item${
-                          addSelectedCandidate?.id === candidate.id ? " is-selected" : ""
-                        }`}
-                        onClick={() => setAddSelectedCandidate(candidate)}
-                      >
-                        <span>
-                          {candidate.name} ({candidate.id})
-                        </span>
-                        <span className="user-candidate-code">{candidate.complexCode}</span>
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
-
-              <label className="field">
-                <span className="field__label">추가 사유 * (최대 200자)</span>
-                <textarea
-                  className="field__input knowledge-textarea"
-                  rows={2}
-                  maxLength={200}
-                  value={addReason}
-                  placeholder="추가 사유를 입력해 주세요."
-                  onChange={(event) => setAddReason(event.target.value)}
-                />
-              </label>
-            </div>
-
-            <div className="modal__footer">
+        <ModalDialog
+          title="관리자 추가"
+          ariaLabel="관리자 추가"
+          onClose={closeAddModal}
+          size="lg"
+          footer={
+            <>
               <button type="button" className="secondary-button" onClick={closeAddModal}>
                 취소
               </button>
@@ -430,9 +374,54 @@ export function AccountsPanel({ accounts: initialAccounts }: AccountsPanelProps)
               >
                 확인
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <label className="field">
+            <span className="field__label">사용자 검색 (이름, 아이디, 단지코드)</span>
+            <input
+              className="field__input"
+              value={addSearch}
+              placeholder="검색어 입력"
+              onChange={(event) => setAddSearch(event.target.value)}
+            />
+          </label>
+
+          <ul className="user-candidate-list">
+            {filteredCandidates.length === 0 ? (
+              <li className="user-candidate-empty">검색 결과가 없습니다.</li>
+            ) : (
+              filteredCandidates.map((candidate) => (
+                <li key={candidate.id}>
+                  <button
+                    type="button"
+                    className={`user-candidate-item${
+                      addSelectedCandidate?.id === candidate.id ? " is-selected" : ""
+                    }`}
+                    onClick={() => setAddSelectedCandidate(candidate)}
+                  >
+                    <span>
+                      {candidate.name} ({candidate.id})
+                    </span>
+                    <span className="user-candidate-code">{candidate.complexCode}</span>
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+
+          <label className="field">
+            <span className="field__label">추가 사유 * (최대 200자)</span>
+            <textarea
+              className="field__input knowledge-textarea"
+              rows={2}
+              maxLength={200}
+              value={addReason}
+              placeholder="추가 사유를 입력해 주세요."
+              onChange={(event) => setAddReason(event.target.value)}
+            />
+          </label>
+        </ModalDialog>
       )}
     </div>
   );

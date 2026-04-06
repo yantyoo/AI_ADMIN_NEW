@@ -1,4 +1,5 @@
 export type FeedbackReaction = "POSITIVE" | "NEGATIVE";
+export type FeedbackPeriod = "DAY" | "WEEK" | "MONTH";
 
 export type FeedbackItem = {
   id: string;

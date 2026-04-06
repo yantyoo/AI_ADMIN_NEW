@@ -1,5 +1,8 @@
-import { KnowledgePage } from "@/features/knowledge/knowledge-page";
+import { getKnowledgeInitialData } from "@/api/knowledge";
+import { KnowledgePanel } from "@/features/knowledge/knowledge-panel";
 
 export default async function Page() {
-  return <KnowledgePage />;
+  const { documents } = await getKnowledgeInitialData();
+
+  return <KnowledgePanel documents={documents} />;
 }

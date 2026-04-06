@@ -8,7 +8,7 @@ import { TopHeader } from "@/features/layout/top-header";
 import { pageMetaByPath } from "@/features/layout/config";
 
 const AUTH_STAGE_KEY = "xperp-mock-auth-stage";
-const PUBLIC_ROUTES = new Set(["/login", "/otp"]);
+const PUBLIC_ROUTES = new Set(["/login"]);
 
 export function AdminShell({
   children

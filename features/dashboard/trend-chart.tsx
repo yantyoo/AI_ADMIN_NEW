@@ -6,7 +6,6 @@ import type { TrendPoint } from "@/types/dashboard";
 
 type TrendChartProps = {
   points: TrendPoint[];
-  rangeLabel: string;
 };
 
 type TooltipState = {
@@ -48,7 +47,7 @@ const buildTopRoundedBarPath = (x: number, y: number, rectWidth: number, rectHei
   ].join(" ");
 };
 
-export function TrendChart({ points, rangeLabel }: TrendChartProps) {
+export function TrendChart({ points }: TrendChartProps) {
   const [tooltip, setTooltip] = useState<TooltipState>(null);
 
   const visitorMax = Math.max(...points.map((point) => point.visitors), 1);
@@ -86,6 +85,7 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
   if (!coords.length) {
     return (
       <div className="trend-chart trend-chart--empty">
+        <div className="trend-chart__empty">표시할 차트 데이터가 없습니다.</div>
         <div className="trend-chart__legend">
           <span className="trend-chart__legend-item">
             <span className="trend-chart__legend-dot trend-chart__legend-dot--bar" />
@@ -95,9 +95,7 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
             <span className="trend-chart__legend-dot" />
             <span>문의 수</span>
           </span>
-          <span className="trend-chart__legend-label">{rangeLabel} 기준</span>
         </div>
-        <div className="trend-chart__empty">표시할 차트 데이터가 없습니다.</div>
       </div>
     );
   }
@@ -106,18 +104,6 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
 
   return (
     <div className="trend-chart">
-      <div className="trend-chart__legend">
-        <span className="trend-chart__legend-item">
-          <span className="trend-chart__legend-dot trend-chart__legend-dot--bar" />
-          <span>접속자 수</span>
-        </span>
-        <span className="trend-chart__legend-item">
-          <span className="trend-chart__legend-dot" />
-          <span>문의 수</span>
-        </span>
-        <span className="trend-chart__legend-label">{rangeLabel} 기준</span>
-      </div>
-
       <div className="trend-chart__stage">
         <svg viewBox={`0 0 ${width} ${height}`} className="trend-chart__svg" role="img">
           {[0, 1, 2, 3, 4].map((index) => {
@@ -191,6 +177,17 @@ export function TrendChart({ points, rangeLabel }: TrendChartProps) {
             <span>{tooltipPoint.inquiries.toLocaleString()} 문의</span>
           </div>
         ) : null}
+      </div>
+
+      <div className="trend-chart__legend">
+        <span className="trend-chart__legend-item">
+          <span className="trend-chart__legend-dot trend-chart__legend-dot--bar" />
+          <span>접속자 수</span>
+        </span>
+        <span className="trend-chart__legend-item">
+          <span className="trend-chart__legend-dot" />
+          <span>문의 수</span>
+        </span>
       </div>
     </div>
   );

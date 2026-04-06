@@ -1,5 +1,5 @@
-import { MockAuthScreen } from "@/features/auth/mock-auth-screen";
+import AuthScreen from "@/features/auth/auth-screen";
 
 export default function Page() {
-  return <MockAuthScreen mode="login" />;
+  return <AuthScreen />;
 }

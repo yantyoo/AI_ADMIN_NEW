@@ -6,7 +6,6 @@ export type MetricCardData = {
   key: "visitors" | "inquiries" | "failures";
   label: string;
   value: number;
-  policyText: string;
   compareLabel: string;
   compareRate: number;
   compareDirection: ComparisonDirection;

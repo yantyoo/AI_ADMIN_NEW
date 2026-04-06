@@ -1,5 +1,5 @@
-import { MockAuthScreen } from "@/features/auth/mock-auth-screen";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <MockAuthScreen mode="otp" />;
+  redirect("/login");
 }

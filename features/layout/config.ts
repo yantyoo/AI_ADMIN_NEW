@@ -1,8 +1,8 @@
-import type { AdminUser, NavItem, PageMeta } from "@/types/layout";
+﻿import type { AdminUser, NavItem, PageMeta } from "@/types/layout";
 
 export const currentUser: AdminUser = {
   id: "chat1004",
-  name: "박윤수",
+  name: "박승준",
   role: "MASTER",
   department: "운영 관리자"
 };
@@ -61,7 +61,7 @@ export const pageMetaByPath: Record<string, PageMeta> = {
   },
   "/knowledge": {
     title: "지식 기반 조회",
-    description: "등록된 문서를 기준으로 답변 테스트를 수행하는 화면입니다."
+    description: "등록된 문서를 기반으로 응답 테스트를 수행하는 화면입니다."
   },
   "/feedback": {
     title: "피드백 관리",
@@ -73,6 +73,6 @@ export const pageMetaByPath: Record<string, PageMeta> = {
   },
   "/cache-qa": {
     title: "캐시 답변 관리",
-    description: "캐시 응답을 질문과 답변 단위로 관리하는 화면입니다."
+    description: "캐시 응답과 질문을 단위로 관리하는 화면입니다."
   }
 };

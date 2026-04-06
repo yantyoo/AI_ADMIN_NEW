@@ -1,11 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { SectionHeader } from "@/components/layout/section-header";
 
 type ListPanelProps = {
   title: ReactNode;
   actions?: ReactNode;
-  description?: ReactNode;
   toolbar?: ReactNode;
   footer?: ReactNode;
   className?: string;
@@ -15,7 +15,6 @@ type ListPanelProps = {
 export function ListPanel({
   title,
   actions,
-  description,
   toolbar,
   footer,
   className,
@@ -23,13 +22,7 @@ export function ListPanel({
 }: ListPanelProps) {
   return (
     <section className={`list-panel${className ? ` ${className}` : ""}`}>
-      <div className="list-panel__header">
-        <div className="list-panel__heading">
-          <h2 className="list-panel__title">{title}</h2>
-          {description ? <p className="list-panel__description">{description}</p> : null}
-        </div>
-        {actions ? <div className="list-panel__actions">{actions}</div> : null}
-      </div>
+      <SectionHeader title={title} actions={actions} className="list-panel__header" />
 
       {toolbar ? <div className="list-panel__toolbar">{toolbar}</div> : null}
 

@@ -14,6 +14,8 @@ type AuthFormState = {
 
 const AUTH_STAGE_KEY = "xperp-mock-auth-stage";
 const AUTH_USER_KEY = "xperp-mock-auth-user";
+const USER_ID_MAX_LENGTH = 10;
+const PASSWORD_MAX_LENGTH = 12;
 
 const defaultState: AuthFormState = {
   userId: "",
@@ -25,6 +27,12 @@ const sleep = (ms: number) =>
   new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);
   });
+
+const normalizeUserId = (value: string) =>
+  value.replace(/[^A-Za-z0-9]/g, "").slice(0, USER_ID_MAX_LENGTH);
+
+const normalizePassword = (value: string) =>
+  value.replace(/[^A-Za-z0-9]/g, "").slice(0, PASSWORD_MAX_LENGTH);
 
 export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
   const router = useRouter();
@@ -47,20 +55,30 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
         return;
       }
 
-      setForm((current) => ({ ...current, userId }));
+      const normalizedUserId = normalizeUserId(userId);
+      setForm((current) => ({ ...current, userId: normalizedUserId }));
       return;
     }
 
-    if (!userId) {
+    const normalizedUserId = normalizeUserId(userId);
+
+    if (!normalizedUserId) {
       router.replace("/login");
       return;
     }
 
-    setForm((current) => ({ ...current, userId }));
+    setForm((current) => ({ ...current, userId: normalizedUserId }));
   }, [mode, router]);
 
   const updateField = (field: keyof AuthFormState) => (value: string) => {
-    setForm((current) => ({ ...current, [field]: value }));
+    const nextValue =
+      field === "userId"
+        ? normalizeUserId(value)
+        : field === "password"
+          ? normalizePassword(value)
+          : value;
+
+    setForm((current) => ({ ...current, [field]: nextValue }));
     setError("");
   };
 
@@ -72,15 +90,18 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
     }
 
     if (mode === "login") {
-      if (!form.userId.trim() || !form.password.trim()) {
+      const userId = normalizeUserId(form.userId.trim());
+      const password = normalizePassword(form.password.trim());
+
+      if (!userId || !password) {
         setError("아이디와 비밀번호를 입력해 주세요.");
         return;
       }
 
       setLoading(true);
-      setHelper("OTP 화면으로 이동 중입니다.");
+      setHelper("OTP 입력 화면으로 이동합니다.");
       window.sessionStorage.setItem(AUTH_STAGE_KEY, "otp_pending");
-      window.sessionStorage.setItem(AUTH_USER_KEY, form.userId.trim());
+      window.sessionStorage.setItem(AUTH_USER_KEY, userId);
       await sleep(450);
       router.replace("/otp");
       return;
@@ -92,16 +113,18 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
     }
 
     setLoading(true);
-    setHelper("대시보드로 이동 중입니다.");
+    setHelper("대시보드로 이동합니다.");
     window.sessionStorage.setItem(AUTH_STAGE_KEY, "authenticated");
-    window.sessionStorage.setItem(AUTH_USER_KEY, form.userId.trim());
+    window.sessionStorage.setItem(AUTH_USER_KEY, normalizeUserId(form.userId.trim()));
     await sleep(450);
     router.replace("/dashboard");
   };
 
   const isSubmitDisabled =
     loading ||
-    (mode === "login" ? !form.userId.trim() || !form.password.trim() : !form.otp.trim());
+    (mode === "login"
+      ? !normalizeUserId(form.userId.trim()) || !normalizePassword(form.password.trim())
+      : !form.otp.trim());
 
   return (
     <main className="auth-shell">
@@ -111,93 +134,69 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
           <h1 className="auth-card__title">{mode === "login" ? "로그인 화면" : "OTP 인증"}</h1>
           <p className="auth-card__description">
             {mode === "login"
-              ? "임의의 아이디와 비밀번호로 다음 단계로 이동하는 목업 흐름입니다."
-              : "임의의 OTP를 입력하면 대시보드로 이동합니다."}
+              ? "테스트 계정으로 로그인하면 OTP 화면으로 이동합니다."
+              : "테스트 OTP를 입력하면 대시보드로 이동합니다."}
           </p>
 
           <ul className="auth-card__guide">
-            <li>실제 인증 연동은 하지 않습니다.</li>
-            <li>화면 확인과 플로우 테스트 용도입니다.</li>
-            <li>입력값은 세션에만 임시 저장합니다.</li>
+            <li>실제 인증 연동은 되어 있지 않습니다.</li>
+            <li>문구와 화면 흐름을 확인하기 위한 목업입니다.</li>
           </ul>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="auth-form__header">
-            <h2 className="auth-form__title">{mode === "login" ? "관리자 로그인" : "OTP 확인"}</h2>
-            <p className="auth-form__caption">
-              {mode === "login"
-                ? "아이디와 비밀번호를 입력하면 OTP 단계로 이동합니다."
-                : "OTP를 입력하면 대시보드 진입으로 처리합니다."}
-            </p>
-          </div>
-
-          <div className="auth-form__fields">
-            <label className="field auth-field">
+          <div className="auth-form__grid">
+            <label className="field auth-form__field">
               <span className="field__label">아이디</span>
               <input
-                className="field__input auth-input"
+                className="field__input"
+                maxLength={USER_ID_MAX_LENGTH}
                 value={form.userId}
                 onChange={(event) => updateField("userId")(event.target.value)}
-                placeholder="예: admin01"
+                placeholder="test0000"
                 autoComplete="username"
+                inputMode="text"
+                disabled={mode === "otp"}
               />
             </label>
 
-            {mode === "login" ? (
-              <label className="field auth-field">
-                <span className="field__label">비밀번호</span>
-                <input
-                  type="password"
-                  className="field__input auth-input"
-                  value={form.password}
-                  onChange={(event) => updateField("password")(event.target.value)}
-                  placeholder="임의의 비밀번호 입력"
-                  autoComplete="current-password"
-                />
-              </label>
-            ) : (
-              <label className="field auth-field">
+            <label className="field auth-form__field">
+              <span className="field__label">비밀번호</span>
+              <input
+                className="field__input"
+                type="password"
+                maxLength={PASSWORD_MAX_LENGTH}
+                value={form.password}
+                onChange={(event) => updateField("password")(event.target.value)}
+                placeholder="a123456789"
+                autoComplete="current-password"
+                inputMode="text"
+                disabled={mode === "otp"}
+              />
+            </label>
+
+            {mode === "otp" ? (
+              <label className="field auth-form__field auth-form__field--otp">
                 <span className="field__label">OTP</span>
                 <input
-                  className="field__input auth-input auth-input--otp"
+                  className="field__input"
+                  inputMode="numeric"
                   value={form.otp}
                   onChange={(event) => updateField("otp")(event.target.value)}
-                  placeholder="OTP 입력"
-                  inputMode="numeric"
+                  placeholder="6자리 숫자 입력"
                   autoComplete="one-time-code"
                 />
               </label>
-            )}
+            ) : null}
           </div>
+
+          {error ? <p className="auth-form__feedback auth-form__feedback--error">{error}</p> : null}
+          {helper ? <p className="auth-form__feedback auth-form__feedback--helper">{helper}</p> : null}
 
           <div className="auth-form__actions">
-            <button type="submit" className="primary-button auth-submit" disabled={isSubmitDisabled}>
-              {loading ? "처리 중..." : mode === "login" ? "다음" : "대시보드 진입"}
+            <button className="primary-button" type="submit" disabled={isSubmitDisabled}>
+              {loading ? "진행 중" : mode === "login" ? "로그인" : "확인"}
             </button>
-            <button
-              type="button"
-              className="secondary-button auth-cancel"
-              onClick={() => {
-                if (mode === "login") {
-                  setForm(defaultState);
-                  setError("");
-                  setHelper("");
-                  return;
-                }
-
-                window.sessionStorage.removeItem(AUTH_STAGE_KEY);
-                window.sessionStorage.removeItem(AUTH_USER_KEY);
-                router.replace("/login");
-              }}
-            >
-              {mode === "login" ? "초기화" : "로그인으로"}
-            </button>
-          </div>
-
-          <div className="auth-form__feedback" aria-live="polite">
-            {error ? <p className="auth-error">{error}</p> : null}
-            {!error && helper ? <p className="auth-helper">{helper}</p> : null}
           </div>
         </form>
       </section>

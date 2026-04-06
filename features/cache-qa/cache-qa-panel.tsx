@@ -1,15 +1,30 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DetailFrame } from "@/components/layout/detail-frame";
 import { ListPanel } from "@/components/layout/list-panel";
+import { SectionHeader } from "@/components/layout/section-header";
 import { Pagination } from "@/components/ui/pagination";
+import { ModalDialog } from "@/components/ui/modal-dialog";
+import { ToastStack } from "@/components/ui/toast-stack";
+import { useAutoDismissMessage } from "@/hooks/use-auto-dismiss-message";
 import {
   createCacheQaEntry,
   findCacheQaDuplicate,
   toggleCacheQaEntryStatus,
   updateCacheQaEntry
 } from "@/api/cache-qa";
+import {
+  CACHE_QA_ANSWER_MAX_LENGTH,
+  CACHE_QA_PAGE_SIZE,
+  CACHE_QA_QUESTION_MAX_LENGTH,
+  CACHE_QA_STATUS_LABELS,
+  CACHE_QA_STATUS_OPTIONS,
+  CACHE_QA_TOAST_DISMISS_MS,
+  DEFAULT_CACHE_QA_FORM
+} from "@/constants/cache-qa";
 import type { CacheQaFilters, CacheQaForm, CacheQaItem, CacheQaStatus } from "@/types/cache-qa";
+import { compareStringDesc, normalizeSearchText } from "@/utils/text";
 
 type CacheQaPanelProps = {
   items: CacheQaItem[];
@@ -17,41 +32,8 @@ type CacheQaPanelProps = {
 
 type EditorMode = "CREATE" | "EDIT";
 
-const PAGE_SIZE = 10;
-const QUESTION_MAX_LENGTH = 500;
-const ANSWER_MAX_LENGTH = 2000;
-
-const statusLabels: Record<CacheQaStatus, string> = {
-  ACTIVE: "활성",
-  INACTIVE: "비활성"
-};
-
-const statusOptions: Array<{ label: string; value: CacheQaFilters["status"] }> = [
-  { label: "전체", value: "ALL" },
-  { label: "활성", value: "ACTIVE" },
-  { label: "비활성", value: "INACTIVE" }
-];
-
-const defaultForm: CacheQaForm = {
-  question: "",
-  answer: "",
-  status: "ACTIVE"
-};
-
-const normalize = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "")
-    .replace(/[^0-9a-z가-힣]/gi, "");
-
-const buildSummary = (value: string, limit = 56) => {
-  const trimmed = value.trim();
-  return trimmed.length <= limit ? trimmed : `${trimmed.slice(0, limit)}...`;
-};
-
 const compareDateDesc = (left: CacheQaItem, right: CacheQaItem) =>
-  right.createdAt.localeCompare(left.createdAt);
+  compareStringDesc(left.createdAt, right.createdAt);
 
 export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
   const [items, setItems] = useState(initialItems.slice().sort(compareDateDesc));
@@ -62,17 +44,17 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<EditorMode>("CREATE");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<CacheQaForm>(defaultForm);
-  const [message, setMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [form, setForm] = useState<CacheQaForm>(DEFAULT_CACHE_QA_FORM);
+  const messageState = useAutoDismissMessage(CACHE_QA_TOAST_DISMISS_MS);
+  const errorState = useAutoDismissMessage(CACHE_QA_TOAST_DISMISS_MS);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const filteredItems = useMemo(() => {
-    const keyword = normalize(filters.keyword);
+    const keyword = normalizeSearchText(filters.keyword);
 
     return items
       .map((item) => {
-        const normalizedQuestion = normalize(item.question);
+        const normalizedQuestion = normalizeSearchText(item.question);
         const exactMatch =
           keyword.length === 0 ||
           normalizedQuestion.includes(keyword) ||
@@ -105,8 +87,11 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
       .map(({ item }) => item);
   }, [filters.keyword, filters.status, items]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
-  const pagedItems = filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / CACHE_QA_PAGE_SIZE));
+  const pagedItems = filteredItems.slice(
+    (page - 1) * CACHE_QA_PAGE_SIZE,
+    page * CACHE_QA_PAGE_SIZE
+  );
   const selectedItem = filteredItems.find((item) => item.id === selectedId) ?? null;
 
   useEffect(() => {
@@ -124,16 +109,11 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
     }
   }, [filteredItems, selectedId]);
 
-  const showMessage = (text: string) => {
-    setMessage(text);
-    setTimeout(() => setMessage(null), 2500);
-  };
-
   const openCreateEditor = () => {
     setEditorMode("CREATE");
     setEditingId(null);
-    setForm(defaultForm);
-    setErrorMessage(null);
+    setForm(DEFAULT_CACHE_QA_FORM);
+    errorState.clearMessage();
     setEditorOpen(true);
   };
 
@@ -147,13 +127,13 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
       answer: selectedItem.answer,
       status: selectedItem.status
     });
-    setErrorMessage(null);
+    errorState.clearMessage();
     setEditorOpen(true);
   };
 
   const closeEditor = () => {
     setEditorOpen(false);
-    setErrorMessage(null);
+    errorState.clearMessage();
   };
 
   const resetSearch = () => {
@@ -169,13 +149,13 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
 
   const handleSubmit = async () => {
     if (!form.question.trim() || !form.answer.trim()) {
-      setErrorMessage("질문과 답변을 모두 입력해 주세요.");
+      errorState.showMessage("질문과 답변을 모두 입력해 주세요.");
       return;
     }
 
     const duplicate = findCacheQaDuplicate(items, form.question.trim(), editingId ?? undefined);
     if (duplicate) {
-      setErrorMessage("유사한 질문이 이미 등록되어 있습니다.");
+      errorState.showMessage("유사한 질문이 이미 등록되어 있습니다.");
       return;
     }
 
@@ -183,28 +163,30 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
       const nextItem = await createCacheQaEntry(form);
       setItems((current) => [nextItem, ...current].sort(compareDateDesc));
       setSelectedId(nextItem.id);
-      showMessage("답변이 등록되었습니다.");
-      setForm(defaultForm);
+      messageState.showMessage("답변이 등록되었습니다.");
+      setForm(DEFAULT_CACHE_QA_FORM);
       closeEditor();
       return;
     }
 
     if (!editingId) {
-      setErrorMessage("수정할 항목을 선택해 주세요.");
+      errorState.showMessage("수정할 항목을 선택해 주세요.");
       return;
     }
 
     const currentItem = items.find((item) => item.id === editingId);
     if (!currentItem) {
-      setErrorMessage("수정 대상이 존재하지 않습니다.");
+      errorState.showMessage("수정 대상이 존재하지 않습니다.");
       return;
     }
 
     const updated = await updateCacheQaEntry(currentItem, form);
-    setItems((current) => current.map((item) => (item.id === editingId ? updated : item)).sort(compareDateDesc));
+    setItems((current) =>
+      current.map((item) => (item.id === editingId ? updated : item)).sort(compareDateDesc)
+    );
     setSelectedId(updated.id);
-      showMessage("답변이 수정되었습니다.");
-    setForm(defaultForm);
+    messageState.showMessage("답변이 수정되었습니다.");
+    setForm(DEFAULT_CACHE_QA_FORM);
     setEditorMode("CREATE");
     setEditingId(null);
     closeEditor();
@@ -215,9 +197,13 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
 
     const nextStatus: CacheQaStatus = selectedItem.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     const updated = await toggleCacheQaEntryStatus(selectedItem, nextStatus);
-    setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)).sort(compareDateDesc));
+    setItems((current) =>
+      current.map((item) => (item.id === updated.id ? updated : item)).sort(compareDateDesc)
+    );
     setSelectedId(updated.id);
-    showMessage(nextStatus === "ACTIVE" ? "답변이 활성화되었습니다." : "답변이 비활성화되었습니다.");
+    messageState.showMessage(
+      nextStatus === "ACTIVE" ? "답변이 활성화되었습니다." : "답변이 비활성화되었습니다."
+    );
   };
 
   const handleDelete = () => {
@@ -229,22 +215,29 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
       return next;
     });
     setDeleteOpen(false);
-    showMessage("답변이 삭제되었습니다.");
+    messageState.showMessage("답변이 삭제되었습니다.");
     setEditorMode("CREATE");
     setEditingId(null);
-    setForm(defaultForm);
+    setForm(DEFAULT_CACHE_QA_FORM);
   };
 
   return (
     <div className="cache-qa-layout">
-      {message ? <p className="content-message">{message}</p> : null}
-      {errorMessage ? <p className="content-error">{errorMessage}</p> : null}
+      <ToastStack
+        items={[
+          messageState.message
+            ? { key: "cache-qa-success", tone: "success" as const, message: messageState.message }
+            : null,
+          errorState.message
+            ? { key: "cache-qa-error", tone: "error" as const, message: errorState.message }
+            : null
+        ].filter((item): item is NonNullable<typeof item> => Boolean(item))}
+      />
 
       <div className="cache-qa-grid">
         <ListPanel
           className="cache-qa-list-card"
           title="답변 목록"
-          description="캐시 우선 응답에 사용하는 질문과 답변을 관리합니다."
           actions={
             <button type="button" className="primary-button" onClick={openCreateEditor}>
               답변 등록
@@ -282,7 +275,7 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
                     setPage(1);
                   }}
                 >
-                  {statusOptions.map((option) => (
+                  {CACHE_QA_STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -310,7 +303,6 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
                 <thead>
                   <tr>
                     <th>질문</th>
-                    <th>답변 요약</th>
                     <th>상태</th>
                     <th>등록일</th>
                     <th>수정일</th>
@@ -326,10 +318,9 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
                       <td>
                         <div className="content-table__title">{item.question}</div>
                       </td>
-                      <td>{buildSummary(item.answer)}</td>
                       <td>
                         <span className={`status-badge status-badge--${item.status.toLowerCase()}`}>
-                          {statusLabels[item.status]}
+                          {CACHE_QA_STATUS_LABELS[item.status]}
                         </span>
                       </td>
                       <td>{item.createdAt}</td>
@@ -343,42 +334,50 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
         </ListPanel>
 
         <aside className="cache-qa-side">
-          <section className="cache-qa-detail-card">
-            <div className="panel__header panel__header--compact">
-              <div>
-                <h2 className="panel__title">상세 정보</h2>
-              </div>
-              {selectedItem ? (
+          <DetailFrame
+            className="cache-qa-detail-card"
+            title="상세 정보"
+            actions={
+              selectedItem ? (
                 <span className={`status-badge status-badge--${selectedItem.status.toLowerCase()}`}>
-                  {statusLabels[selectedItem.status]}
+                  {CACHE_QA_STATUS_LABELS[selectedItem.status]}
                 </span>
-              ) : null}
-            </div>
-
+              ) : null
+            }
+          >
             {selectedItem ? (
               <div className="cache-qa-detail-scroll">
-                <div className="cache-qa-conversation">
-                  <div className="feedback-conversation__turn feedback-conversation__turn--user">
-                    <p className="feedback-conversation__speaker">
-                      질문 · {selectedItem.createdAt}
-                    </p>
-                    <p className="feedback-conversation__message">{selectedItem.question}</p>
-                  </div>
+                <div className="feedback-conversation-section">
+                  <p className="feedback-conversation-label">대화 내용</p>
+                  <div className="cache-qa-conversation">
+                    <div className="feedback-conversation__turn feedback-conversation__turn--user">
+                      <p className="feedback-conversation__speaker">질문</p>
+                      <p className="feedback-conversation__message">{selectedItem.question}</p>
+                    </div>
 
-                  <div className="feedback-conversation__turn feedback-conversation__turn--bot">
-                    <p className="feedback-conversation__speaker">
-                      답변 · {selectedItem.updatedAt}
-                    </p>
-                    <p className="feedback-conversation__message">{selectedItem.answer}</p>
+                    <div className="feedback-conversation__turn feedback-conversation__turn--bot">
+                      <p className="feedback-conversation__speaker">답변</p>
+                      <p className="feedback-conversation__message">{selectedItem.answer}</p>
+                    </div>
                   </div>
                 </div>
 
                 <dl className="content-detail__list cache-qa-meta">
-                  <div className="cache-qa-meta__inline">
-                    <dt>수정자 / 수정일</dt>
-                    <dd>
-                      {selectedItem.updatedBy} / {selectedItem.updatedAt}
-                    </dd>
+                  <div>
+                    <dt>등록자</dt>
+                    <dd>{selectedItem.createdBy}</dd>
+                  </div>
+                  <div>
+                    <dt>등록일</dt>
+                    <dd>{selectedItem.createdAt}</dd>
+                  </div>
+                  <div>
+                    <dt>수정자</dt>
+                    <dd>{selectedItem.updatedBy}</dd>
+                  </div>
+                  <div>
+                    <dt>수정일</dt>
+                    <dd>{selectedItem.updatedAt}</dd>
                   </div>
                   <div>
                     <dt>캐시 조회 수</dt>
@@ -416,90 +415,25 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
                 답변을 선택하면 상세 정보가 표시됩니다.
               </div>
             )}
-          </section>
+          </DetailFrame>
         </aside>
       </div>
 
       {editorOpen ? (
-        <div className="modal-backdrop" role="presentation" onClick={closeEditor}>
-          <div
-            className="modal modal--compact"
-            role="dialog"
-            aria-modal="true"
-            aria-label={editorMode === "EDIT" ? "답변 수정" : "답변 등록"}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal__header">
-              <h3>{editorMode === "EDIT" ? "답변 수정" : "답변 등록"}</h3>
-              <button type="button" className="icon-button" onClick={closeEditor}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal__body">
-              <div className="cache-qa-form cache-qa-form--modal">
-                <label className="field">
-                  <span className="field__label">질문 *</span>
-                  <textarea
-                    className="field__input knowledge-textarea cache-qa-textarea"
-                    rows={3}
-                    maxLength={QUESTION_MAX_LENGTH}
-                    value={form.question}
-                    placeholder="캐시 응답용 질문을 입력해 주세요."
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, question: event.target.value }))
-                    }
-                  />
-                  <p className="cache-qa-form__counter">
-                    {form.question.length}/{QUESTION_MAX_LENGTH}자
-                  </p>
-                </label>
-
-                <label className="field">
-                  <span className="field__label">답변 *</span>
-                  <textarea
-                    className="field__input knowledge-textarea cache-qa-textarea"
-                    rows={6}
-                    maxLength={ANSWER_MAX_LENGTH}
-                    value={form.answer}
-                    placeholder="캐시 응답으로 반환할 답변을 입력해 주세요."
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, answer: event.target.value }))
-                    }
-                  />
-                  <p className="cache-qa-form__counter">
-                    {form.answer.length}/{ANSWER_MAX_LENGTH}자
-                  </p>
-                </label>
-
-                <label className="field">
-                  <span className="field__label">상태</span>
-                  <select
-                    className="field__input"
-                    value={form.status}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        status: event.target.value as CacheQaStatus
-                      }))
-                    }
-                  >
-                    <option value="ACTIVE">활성</option>
-                    <option value="INACTIVE">비활성</option>
-                  </select>
-                </label>
-
-                {errorMessage ? <p className="content-error">{errorMessage}</p> : null}
-              </div>
-            </div>
-
-            <div className="modal__footer modal__footer--split">
+        <ModalDialog
+          title={editorMode === "EDIT" ? "답변 수정" : "답변 등록"}
+          ariaLabel={editorMode === "EDIT" ? "답변 수정" : "답변 등록"}
+          onClose={closeEditor}
+          size="xl"
+          footerClassName="modal__footer--split"
+          footer={
+            <>
               <button
                 type="button"
                 className="secondary-button"
                 onClick={() => {
                   closeEditor();
-                  setForm(defaultForm);
+                  setForm(DEFAULT_CACHE_QA_FORM);
                   setEditorMode("CREATE");
                   setEditingId(null);
                 }}
@@ -509,39 +443,83 @@ export function CacheQaPanel({ items: initialItems }: CacheQaPanelProps) {
               <button type="button" className="primary-button" onClick={handleSubmit}>
                 {editorMode === "EDIT" ? "수정 저장" : "등록"}
               </button>
-            </div>
+            </>
+          }
+        >
+          <div className="cache-qa-form cache-qa-form--modal">
+            <label className="field">
+              <span className="field__label">질문 *</span>
+              <textarea
+                className="field__input knowledge-textarea cache-qa-textarea"
+                rows={3}
+                maxLength={CACHE_QA_QUESTION_MAX_LENGTH}
+                value={form.question}
+                placeholder="캐시 응답용 질문을 입력해 주세요."
+                onChange={(event) => setForm((current) => ({ ...current, question: event.target.value }))}
+              />
+              <p className="cache-qa-form__counter">
+                {form.question.length}/{CACHE_QA_QUESTION_MAX_LENGTH}자
+              </p>
+            </label>
+
+            <label className="field">
+              <span className="field__label">답변 *</span>
+              <textarea
+                className="field__input knowledge-textarea cache-qa-textarea"
+                rows={6}
+                maxLength={CACHE_QA_ANSWER_MAX_LENGTH}
+                value={form.answer}
+                placeholder="캐시 응답으로 반환할 답변을 입력해 주세요."
+                onChange={(event) => setForm((current) => ({ ...current, answer: event.target.value }))}
+              />
+              <p className="cache-qa-form__counter">
+                {form.answer.length}/{CACHE_QA_ANSWER_MAX_LENGTH}자
+              </p>
+            </label>
+
+            <label className="field">
+              <span className="field__label">상태</span>
+              <select
+                className="field__input"
+                value={form.status}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    status: event.target.value as CacheQaStatus
+                  }))
+                }
+              >
+                <option value="ACTIVE">활성</option>
+                <option value="INACTIVE">비활성</option>
+              </select>
+            </label>
+
+            {errorState.message ? <p className="content-error">{errorState.message}</p> : null}
           </div>
-        </div>
+        </ModalDialog>
       ) : null}
 
       {deleteOpen ? (
-        <div className="modal-backdrop" role="presentation" onClick={() => setDeleteOpen(false)}>
-          <div
-            className="modal modal--compact"
-            role="dialog"
-            aria-modal="true"
-            aria-label="답변 삭제 확인"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal__header">
-              <h3>답변 삭제 확인</h3>
-              <button type="button" className="icon-button" onClick={() => setDeleteOpen(false)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal__body">
-              <p className="content-confirm">선택한 답변을 삭제하면 캐시 응답에서 즉시 제외됩니다.</p>
-            </div>
-            <div className="modal__footer modal__footer--split">
+        <ModalDialog
+          title="답변 삭제 확인"
+          ariaLabel="답변 삭제 확인"
+          onClose={() => setDeleteOpen(false)}
+          size="sm"
+          compact
+          footerClassName="modal__footer--split"
+          footer={
+            <>
               <button type="button" className="secondary-button" onClick={() => setDeleteOpen(false)}>
                 취소
               </button>
               <button type="button" className="danger-button" onClick={handleDelete}>
                 삭제
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="content-confirm">선택한 답변을 삭제하면 캐시 응답에서 즉시 제외됩니다.</p>
+        </ModalDialog>
       ) : null}
     </div>
   );

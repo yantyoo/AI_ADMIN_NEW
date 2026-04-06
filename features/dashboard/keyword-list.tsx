@@ -1,20 +1,17 @@
+import { SectionHeader } from "@/components/layout/section-header";
 import type { KeywordItem } from "@/types/dashboard";
-import { SectionHeader } from "@/features/dashboard/section-header";
+import { formatPercent } from "@/utils/text";
 
 type KeywordListProps = {
   title: string;
-  rangeLabel: string;
   items: KeywordItem[];
+  bare?: boolean;
 };
 
-const formatPercent = (value: number) => {
-  return Number.isInteger(value) ? `${value}%` : `${value.toFixed(1)}%`;
-};
-
-export function KeywordList({ title, rangeLabel, items }: KeywordListProps) {
+export function KeywordList({ title, items, bare }: KeywordListProps) {
   return (
-    <section className="dashboard-keyword-card">
-      <SectionHeader title={title} subtitle={rangeLabel} />
+    <section className={`dashboard-keyword-card${bare ? " dashboard-keyword-card--bare" : ""}`}>
+      <SectionHeader title={title} className="dashboard-keyword-card__header" />
 
       {items.length === 0 ? (
         <div className="dashboard-keyword-empty">조건에 맞는 질문 키워드가 없습니다.</div>
