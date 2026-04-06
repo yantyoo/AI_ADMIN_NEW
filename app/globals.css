@@ -2659,8 +2659,6 @@ select.field__input {
 
 .auth-standalone__intro {
   padding: 0;
-  background: transparent;
-  color: var(--text);
 }
 
 .auth-card .primary-button {
