@@ -19,7 +19,7 @@ const buildSummary = (
   };
 };
 
-export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
+export const dashboardDataByRange: Record<TimeRange, DashboardPayload> = {
   DAY: {
     selectedRange: "DAY",
     metrics: [
@@ -212,5 +212,5 @@ export const dashboardMockByRange: Record<TimeRange, DashboardPayload> = {
 };
 
 export async function getDashboardData(range: TimeRange = "WEEK"): Promise<DashboardPayload> {
-  return dashboardMockByRange[range];
+  return dashboardDataByRange[range];
 }

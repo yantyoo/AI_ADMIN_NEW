@@ -74,7 +74,7 @@ export function FeedbackRatio({ data }: FeedbackRatioProps) {
 
   return (
     <section className="panel panel--side feedback-ratio-card">
-      <SectionHeader title="피드백 비율" subtitle="오늘 기준 7일" />
+      <SectionHeader title="피드백 비율" subtitle="고정 지표" />
 
       <div className="feedback-ratio">
         <div className="feedback-ratio__chart-shell">

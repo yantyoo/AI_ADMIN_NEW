@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import { navItems } from "@/features/layout/config";
 import { clearAuthProfile, readStoredAuthProfile } from "@/features/layout/session";
 
-const AUTH_STAGE_KEY = "xperp-mock-auth-stage";
-const AUTH_AUTHENTICATED_KEY = "xperp-mock-authenticated";
-const AUTH_USER_KEY = "xperp-mock-auth-user";
-const AUTH_OTP_FAILURES_KEY = "xperp-mock-otp-failures";
-const AUTH_OTP_LOCKED_KEY = "xperp-mock-otp-locked";
+const AUTH_STAGE_KEY = "xperp-auth-stage";
+const AUTH_AUTHENTICATED_KEY = "xperp-authenticated";
+const AUTH_USER_KEY = "xperp-auth-user";
+const AUTH_OTP_FAILURES_KEY = "xperp-auth-otp-failures";
+const AUTH_OTP_LOCKED_KEY = "xperp-auth-otp-locked";
 
 export function Sidebar() {
   const pathname = usePathname() ?? "/";

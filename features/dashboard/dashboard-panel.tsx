@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { dashboardMockByRange } from "@/api/dashboard";
+import { dashboardDataByRange } from "@/api/dashboard";
 import type { DashboardPayload, TimeRange } from "@/types/dashboard";
 import { dashboardRangeLabels } from "@/features/dashboard/range-config";
 import { ErrorState } from "@/features/dashboard/error-state";
@@ -19,7 +19,7 @@ type DashboardPanelProps = {
 export function DashboardPanel({ data }: DashboardPanelProps) {
   const [selectedRange, setSelectedRange] = useState<TimeRange>(data.selectedRange);
   const [showError, setShowError] = useState(false);
-  const selectedData = dashboardMockByRange[selectedRange];
+  const selectedData = dashboardDataByRange[selectedRange];
   const selectedLabel = dashboardRangeLabels[selectedRange];
 
   return (
@@ -52,7 +52,7 @@ export function DashboardPanel({ data }: DashboardPanelProps) {
       </section>
 
       <section className="dashboard-side">
-        <KeywordList title="질문 키워드" rangeLabel="오늘 기준 7일" items={data.fixedKeywords} />
+        <KeywordList title="질문 키워드" rangeLabel="고정 지표" items={data.fixedKeywords} />
         <FeedbackRatio data={data.fixedFeedbackRatio} />
       </section>
     </div>

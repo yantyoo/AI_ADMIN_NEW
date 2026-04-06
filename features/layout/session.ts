@@ -1,11 +1,11 @@
 import type { AdminUser, UserRole } from "@/types/layout";
 
-export const AUTH_STAGE_KEY = "xperp-mock-auth-stage";
-export const AUTH_AUTHENTICATED_KEY = "xperp-mock-authenticated";
-export const AUTH_USER_KEY = "xperp-mock-auth-user";
-export const AUTH_PROFILE_KEY = "xperp-mock-auth-profile";
-export const AUTH_OTP_FAILURES_KEY = "xperp-mock-otp-failures";
-export const AUTH_OTP_LOCKED_KEY = "xperp-mock-otp-locked";
+export const AUTH_STAGE_KEY = "xperp-auth-stage";
+export const AUTH_AUTHENTICATED_KEY = "xperp-authenticated";
+export const AUTH_USER_KEY = "xperp-auth-user";
+export const AUTH_PROFILE_KEY = "xperp-auth-profile";
+export const AUTH_OTP_FAILURES_KEY = "xperp-auth-otp-failures";
+export const AUTH_OTP_LOCKED_KEY = "xperp-auth-otp-locked";
 
 export type AuthProfile = AdminUser & {
   userId: string;
@@ -14,19 +14,19 @@ export type AuthProfile = AdminUser & {
 export const DEFAULT_AUTH_PROFILE: AuthProfile = {
   userId: "chat1004",
   id: "chat1004",
-  name: "박운영",
+  name: "박승현",
   role: "MASTER",
-  department: "운영 관리자"
+  department: "업무 관리자"
 };
 
-const MOCK_AUTH_USERS: Record<string, AuthProfile> = {
+const AUTH_USERS: Record<string, AuthProfile> = {
   test0000: DEFAULT_AUTH_PROFILE,
   test1111: {
     userId: "test1111",
     id: "op2031",
-    name: "김운영",
+    name: "김관리",
     role: "OPERATOR",
-    department: "운영 담당"
+    department: "업무 담당"
   }
 };
 
@@ -45,8 +45,8 @@ const parseProfile = (value: string | null): AuthProfile | null => {
   }
 };
 
-export const resolveMockAuthProfile = (userId: string): AuthProfile => {
-  return MOCK_AUTH_USERS[userId] ?? DEFAULT_AUTH_PROFILE;
+export const resolveAuthProfile = (userId: string): AuthProfile => {
+  return AUTH_USERS[userId] ?? DEFAULT_AUTH_PROFILE;
 };
 
 export const readStoredAuthProfile = (): AuthProfile => {
@@ -61,7 +61,7 @@ export const readStoredAuthProfile = (): AuthProfile => {
   if (localProfile) return localProfile;
 
   const userId = window.sessionStorage.getItem(AUTH_USER_KEY) ?? window.localStorage.getItem(AUTH_USER_KEY) ?? "";
-  return resolveMockAuthProfile(userId);
+  return resolveAuthProfile(userId);
 };
 
 export const storeAuthProfile = (profile: AuthProfile, remember: boolean) => {

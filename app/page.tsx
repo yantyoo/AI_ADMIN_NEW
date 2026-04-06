@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const AUTH_STAGE_KEY = "xperp-mock-auth-stage";
+const AUTH_STAGE_KEY = "xperp-auth-stage";
 
 export default function Page() {
   const router = useRouter();
