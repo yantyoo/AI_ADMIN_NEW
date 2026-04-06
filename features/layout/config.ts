@@ -30,7 +30,7 @@ export const navItems: NavItem[] = [
     key: "knowledge",
     label: "지식 기반 조회",
     href: "/knowledge",
-    roles: ["MASTER"]
+    roles: ["MASTER", "OPERATOR"]
   },
   {
     key: "feedback",
