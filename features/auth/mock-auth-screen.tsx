@@ -14,6 +14,8 @@ type AuthFormState = {
 
 const AUTH_STAGE_KEY = "xperp-mock-auth-stage";
 const AUTH_USER_KEY = "xperp-mock-auth-user";
+const USER_ID_MAX_LENGTH = 10;
+const PASSWORD_MAX_LENGTH = 12;
 
 const defaultState: AuthFormState = {
   userId: "",
@@ -25,6 +27,12 @@ const sleep = (ms: number) =>
   new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);
   });
+
+const normalizeUserId = (value: string) =>
+  value.replace(/[^A-Za-z0-9]/g, "").slice(0, USER_ID_MAX_LENGTH);
+
+const normalizePassword = (value: string) =>
+  value.replace(/[^A-Za-z0-9]/g, "").slice(0, PASSWORD_MAX_LENGTH);
 
 export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
   const router = useRouter();
@@ -47,20 +55,30 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
         return;
       }
 
-      setForm((current) => ({ ...current, userId }));
+      const normalizedUserId = normalizeUserId(userId);
+      setForm((current) => ({ ...current, userId: normalizedUserId }));
       return;
     }
 
-    if (!userId) {
+    const normalizedUserId = normalizeUserId(userId);
+
+    if (!normalizedUserId) {
       router.replace("/login");
       return;
     }
 
-    setForm((current) => ({ ...current, userId }));
+    setForm((current) => ({ ...current, userId: normalizedUserId }));
   }, [mode, router]);
 
   const updateField = (field: keyof AuthFormState) => (value: string) => {
-    setForm((current) => ({ ...current, [field]: value }));
+    const nextValue =
+      field === "userId"
+        ? normalizeUserId(value)
+        : field === "password"
+          ? normalizePassword(value)
+          : value;
+
+    setForm((current) => ({ ...current, [field]: nextValue }));
     setError("");
   };
 
@@ -72,7 +90,10 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
     }
 
     if (mode === "login") {
-      if (!form.userId.trim() || !form.password.trim()) {
+      const userId = normalizeUserId(form.userId.trim());
+      const password = normalizePassword(form.password.trim());
+
+      if (!userId || !password) {
         setError("아이디와 비밀번호를 입력해 주세요.");
         return;
       }
@@ -80,7 +101,7 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
       setLoading(true);
       setHelper("OTP 입력 화면으로 이동합니다.");
       window.sessionStorage.setItem(AUTH_STAGE_KEY, "otp_pending");
-      window.sessionStorage.setItem(AUTH_USER_KEY, form.userId.trim());
+      window.sessionStorage.setItem(AUTH_USER_KEY, userId);
       await sleep(450);
       router.replace("/otp");
       return;
@@ -94,14 +115,16 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
     setLoading(true);
     setHelper("대시보드로 이동합니다.");
     window.sessionStorage.setItem(AUTH_STAGE_KEY, "authenticated");
-    window.sessionStorage.setItem(AUTH_USER_KEY, form.userId.trim());
+    window.sessionStorage.setItem(AUTH_USER_KEY, normalizeUserId(form.userId.trim()));
     await sleep(450);
     router.replace("/dashboard");
   };
 
   const isSubmitDisabled =
     loading ||
-    (mode === "login" ? !form.userId.trim() || !form.password.trim() : !form.otp.trim());
+    (mode === "login"
+      ? !normalizeUserId(form.userId.trim()) || !normalizePassword(form.password.trim())
+      : !form.otp.trim());
 
   return (
     <main className="auth-shell">
@@ -127,10 +150,12 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
               <span className="field__label">아이디</span>
               <input
                 className="field__input"
+                maxLength={USER_ID_MAX_LENGTH}
                 value={form.userId}
                 onChange={(event) => updateField("userId")(event.target.value)}
                 placeholder="test0000"
                 autoComplete="username"
+                inputMode="text"
                 disabled={mode === "otp"}
               />
             </label>
@@ -140,10 +165,12 @@ export function MockAuthScreen({ mode }: { mode: MockAuthMode }) {
               <input
                 className="field__input"
                 type="password"
+                maxLength={PASSWORD_MAX_LENGTH}
                 value={form.password}
                 onChange={(event) => updateField("password")(event.target.value)}
                 placeholder="a123456789"
                 autoComplete="current-password"
+                inputMode="text"
                 disabled={mode === "otp"}
               />
             </label>

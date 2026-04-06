@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { ModalPortal } from "@/components/ui/modal-portal";
+import { ModalDialog } from "@/components/ui/modal-dialog";
 import { navItems } from "@/features/layout/config";
 import { clearAuthProfile, readStoredAuthProfile } from "@/features/layout/session";
 
@@ -76,30 +76,28 @@ export function Sidebar() {
       </div>
 
       {logoutOpen ? (
-        <ModalPortal backdropClassName="logout-backdrop" onBackdropClick={() => setLogoutOpen(false)}>
-          <section
-            className="modal modal--compact"
-            role="dialog"
-            aria-modal="true"
-            aria-label="로그아웃 확인"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal__header modal__header--tight">
-              <h3>로그아웃</h3>
-            </div>
-            <div className="modal__body">
-              <p className="logout-confirm__text">로그아웃 하시겠습니까?</p>
-            </div>
-            <div className="modal__footer modal__footer--split">
+        <ModalDialog
+          title="로그아웃"
+          ariaLabel="로그아웃 확인"
+          onClose={() => setLogoutOpen(false)}
+          size="sm"
+          compact
+          backdropClassName="logout-backdrop"
+          headerClassName="modal__header--tight"
+          footerClassName="modal__footer--split"
+          footer={
+            <>
               <button type="button" className="secondary-button" onClick={() => setLogoutOpen(false)}>
                 취소
               </button>
               <button type="button" className="danger-button" onClick={handleLogout}>
                 확인
               </button>
-            </div>
-          </section>
-        </ModalPortal>
+            </>
+          }
+        >
+          <p className="logout-confirm__text">로그아웃 하시겠습니까?</p>
+        </ModalDialog>
       ) : null}
     </aside>
   );

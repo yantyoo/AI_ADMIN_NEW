@@ -48,7 +48,7 @@ export function DashboardPanel({ data }: DashboardPanelProps) {
       </section>
 
       <section className="dashboard-side">
-        <KeywordList title="질문 키워드" rangeLabel="오늘 기준 7일" items={data.fixedKeywords} />
+        <KeywordList title="질문 키워드" items={data.fixedKeywords} />
         <FeedbackRatio data={data.fixedFeedbackRatio} />
       </section>
     </div>

@@ -7,6 +7,8 @@ import type {
   KnowledgeResult,
 } from "@/types/knowledge";
 import { executeKnowledgeQuery } from "@/api/knowledge";
+import { DetailFrame } from "@/components/layout/detail-frame";
+import { SectionHeader } from "@/components/layout/section-header";
 
 type KnowledgePanelProps = {
   documents: KnowledgeDocument[];
@@ -72,8 +74,7 @@ export function KnowledgePanel({ documents }: KnowledgePanelProps) {
     <div className="knowledge-layout">
       <div className="knowledge-grid">
         <section className="panel panel--main">
-          <h2 className="panel__title">조회 조건</h2>
-          <p className="panel__caption">테스트 문서를 선택해 조회합니다.</p>
+          <SectionHeader title="조회 조건" />
 
           <div className="knowledge-form">
             <label className="field">
@@ -139,9 +140,7 @@ export function KnowledgePanel({ documents }: KnowledgePanelProps) {
           </div>
         </section>
 
-        <section className="panel panel--main">
-          <h2 className="panel__title">조회 결과</h2>
-          <p className="panel__caption">응답 결과와 참조 문서를 확인합니다.</p>
+        <DetailFrame className="panel panel--main" title="조회 결과">
 
           {queryState === "IDLE" && (
             <div className="knowledge-result-empty">조건을 입력한 뒤 조회를 시작해 주세요.</div>
@@ -188,7 +187,7 @@ export function KnowledgePanel({ documents }: KnowledgePanelProps) {
               </div>
             </div>
           )}
-        </section>
+        </DetailFrame>
       </div>
     </div>
   );

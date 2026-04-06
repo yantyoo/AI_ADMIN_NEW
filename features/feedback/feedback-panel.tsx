@@ -1,64 +1,24 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import { DetailFrame } from "@/components/layout/detail-frame";
+import { SectionHeader } from "@/components/layout/section-header";
 import type { FeedbackDetail, FeedbackFilters, FeedbackReaction } from "@/types/feedback";
+import { FEEDBACK_FILTER_OPTIONS, FEEDBACK_REACTION_LABELS } from "@/constants/feedback";
+import { isWithinDateRange, type DateRange } from "@/utils/date-range";
+import { compareStringDesc } from "@/utils/text";
 
 type FeedbackPanelProps = {
   feedbacks: FeedbackDetail[];
 };
 
-type DateRangeFilter = {
-  startDate: string;
-  endDate: string;
-};
-
-const reactionLabels: Record<FeedbackReaction, string> = {
-  POSITIVE: "긍정",
-  NEGATIVE: "부정"
-};
-
-const filterOptions: Array<{ label: string; value: FeedbackFilters["reaction"] }> = [
-  { label: "전체", value: "ALL" },
-  { label: "긍정", value: "POSITIVE" },
-  { label: "부정", value: "NEGATIVE" }
-];
-
-const toDate = (value: string) => new Date(value.replace(" ", "T"));
-
-const startOfDayIso = (value: string) => `${value}T00:00:00`;
-
-const endOfDayIso = (value: string) => `${value}T23:59:59.999`;
-
 const compareFeedbackDesc = (left: FeedbackDetail, right: FeedbackDetail) =>
-  right.createdAt.localeCompare(left.createdAt);
-
-const isWithinDateRange = (value: string, range: DateRangeFilter) => {
-  if (!range.startDate && !range.endDate) {
-    return true;
-  }
-
-  const dateValue = toDate(value).getTime();
-  const startValue = range.startDate ? toDate(startOfDayIso(range.startDate)).getTime() : null;
-  const endValue = range.endDate ? toDate(endOfDayIso(range.endDate)).getTime() : null;
-
-  if (startValue !== null && endValue !== null && startValue > endValue) {
-    return dateValue >= endValue && dateValue <= startValue;
-  }
-
-  if (startValue !== null && dateValue < startValue) {
-    return false;
-  }
-
-  if (endValue !== null && dateValue > endValue) {
-    return false;
-  }
-
-  return true;
-};
+  compareStringDesc(left.createdAt, right.createdAt);
 
 export function FeedbackPanel({ feedbacks }: FeedbackPanelProps) {
   const [filters, setFilters] = useState<FeedbackFilters>({ reaction: "ALL" });
-  const [dateRange, setDateRange] = useState<DateRangeFilter>({ startDate: "", endDate: "" });
+  const [dateDraft, setDateDraft] = useState<DateRange>({ startDate: "", endDate: "" });
+  const [dateRange, setDateRange] = useState<DateRange>({ startDate: "", endDate: "" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
@@ -71,64 +31,84 @@ export function FeedbackPanel({ feedbacks }: FeedbackPanelProps) {
 
   const selected = filtered.find((feedback) => feedback.id === selectedId) ?? filtered[0] ?? null;
 
+  const applyDateRange = () => {
+    setDateRange(dateDraft);
+  };
+
+  const resetDateRange = () => {
+    const emptyRange = { startDate: "", endDate: "" };
+    setDateDraft(emptyRange);
+    setDateRange(emptyRange);
+  };
+
   return (
     <div className="feedback-layout">
       <div className="feedback-grid">
         <section className="feedback-list-card">
-          <div className="feedback-list-header">
-            <h2 className="content-section-title">피드백 목록</h2>
-            <div className="feedback-filter-row">
-              <div className="feedback-filters__tabs">
-                {filterOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`feedback-filter__button${
-                      filters.reaction === option.value ? " is-active" : ""
-                    }`}
-                    onClick={() => setFilters({ reaction: option.value })}
-                  >
+          <SectionHeader title="피드백 목록" className="feedback-list-header" />
+          <div className="feedback-filter-bar">
+            <div className="feedback-filter-field">
+              <label className="field__label" htmlFor="feedback-reaction-filter">
+                유형
+              </label>
+              <select
+                id="feedback-reaction-filter"
+                className="field__input feedback-filter-select"
+                value={filters.reaction}
+                onChange={(event) =>
+                  setFilters({ reaction: event.target.value as FeedbackFilters["reaction"] })
+                }
+              >
+                {FEEDBACK_FILTER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
                     {option.label}
-                  </button>
+                  </option>
                 ))}
+              </select>
+            </div>
+
+            <div className="feedback-range-actions">
+              <div className="feedback-range-field">
+                <label className="field__label" htmlFor="feedback-range-start">
+                  시작일
+                </label>
+                <input
+                  id="feedback-range-start"
+                  type="date"
+                  className="field__input feedback-range-input"
+                  value={dateDraft.startDate}
+                  onChange={(event) =>
+                    setDateDraft((current) => ({ ...current, startDate: event.target.value }))
+                  }
+                />
               </div>
 
-              <div className="feedback-range-bar">
-                <div className="feedback-range-actions">
-                  <div className="feedback-range-field">
-                    <label className="field__label" htmlFor="feedback-range-start">
-                      시작일
-                    </label>
-                    <input
-                      id="feedback-range-start"
-                      type="date"
-                      className="field__input feedback-range-input"
-                      value={dateRange.startDate}
-                      onChange={(event) =>
-                        setDateRange((current) => ({ ...current, startDate: event.target.value }))
-                      }
-                    />
-                  </div>
+              <span className="feedback-range-divider" aria-hidden="true">
+                ~
+              </span>
 
-                  <span className="feedback-range-divider" aria-hidden="true">
-                    ~
-                  </span>
+              <div className="feedback-range-field">
+                <label className="field__label" htmlFor="feedback-range-end">
+                  종료일
+                </label>
+                <input
+                  id="feedback-range-end"
+                  type="date"
+                  className="field__input feedback-range-input"
+                  value={dateDraft.endDate}
+                  onChange={(event) =>
+                    setDateDraft((current) => ({ ...current, endDate: event.target.value }))
+                  }
+                />
+              </div>
 
-                  <div className="feedback-range-field">
-                    <label className="field__label" htmlFor="feedback-range-end">
-                      종료일
-                    </label>
-                    <input
-                      id="feedback-range-end"
-                      type="date"
-                      className="field__input feedback-range-input"
-                      value={dateRange.endDate}
-                      onChange={(event) =>
-                        setDateRange((current) => ({ ...current, endDate: event.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
+              <div className="feedback-range-buttons">
+                <button type="button" className="primary-button feedback-range-button" onClick={applyDateRange}>
+                  검색
+                </button>
+                <button type="button" className="secondary-button feedback-range-button" onClick={resetDateRange}>
+                  초기화
+                </button>
               </div>
             </div>
           </div>
@@ -138,7 +118,7 @@ export function FeedbackPanel({ feedbacks }: FeedbackPanelProps) {
               <thead>
                 <tr>
                   <th>작성일시</th>
-                  <th>고객명</th>
+                  <th>단지명</th>
                   <th>사용자</th>
                   <th>반응</th>
                   <th>부정사유</th>
@@ -165,7 +145,7 @@ export function FeedbackPanel({ feedbacks }: FeedbackPanelProps) {
                         <span
                           className={`feedback-reaction-badge feedback-reaction-badge--${item.reaction.toLowerCase()}`}
                         >
-                          {reactionLabels[item.reaction]}
+                          {FEEDBACK_REACTION_LABELS[item.reaction]}
                         </span>
                       </td>
                       <td>{item.hasNegativeReason ? "있음" : "-"}</td>
@@ -177,33 +157,28 @@ export function FeedbackPanel({ feedbacks }: FeedbackPanelProps) {
           </div>
         </section>
 
-        <aside className="feedback-detail-card">
+        <DetailFrame
+          className="feedback-detail-card"
+          title="피드백 상세"
+            actions={
+              selected ? (
+                <span className={`feedback-reaction-badge feedback-reaction-badge--${selected.reaction.toLowerCase()}`}>
+                  {FEEDBACK_REACTION_LABELS[selected.reaction]}
+                </span>
+              ) : null
+            }
+        >
           {selected === null ? (
             <div className="content-empty content-empty--detail">
               피드백을 선택하면 상세 정보가 표시됩니다.
             </div>
           ) : (
             <div className="feedback-detail-scroll">
-              <div className="content-detail__header">
-                <div>
-                  <h3 className="content-detail__title">{selected.complexName}</h3>
-                  <p className="content-detail__caption">
-                    {selected.userId} · {selected.createdAt}
-                  </p>
-                </div>
-                <span
-                  className={`feedback-reaction-badge feedback-reaction-badge--${selected.reaction.toLowerCase()}`}
-                >
-                  {reactionLabels[selected.reaction]}
-                </span>
-              </div>
-
-              {selected.reaction === "NEGATIVE" && selected.negativeReason && (
-                <div className="feedback-negative-reason">
-                  <strong>부정사유</strong>
-                  <p>{selected.negativeReason}</p>
-                </div>
-              )}
+              <SectionHeader
+                title={selected.complexName}
+                className="detail-frame__header"
+                titleAs="h3"
+              />
 
               <div className="feedback-conversation-section">
                 <p className="feedback-conversation-label">대화 내용</p>
@@ -221,9 +196,16 @@ export function FeedbackPanel({ feedbacks }: FeedbackPanelProps) {
                   ))}
                 </div>
               </div>
+
+              {selected.reaction === "NEGATIVE" && selected.negativeReason && (
+                <div className="feedback-negative-reason">
+                  <strong>부정사유</strong>
+                  <p>{selected.negativeReason}</p>
+                </div>
+              )}
             </div>
           )}
-        </aside>
+        </DetailFrame>
       </div>
     </div>
   );

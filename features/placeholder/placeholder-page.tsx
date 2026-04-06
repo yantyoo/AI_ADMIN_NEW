@@ -12,7 +12,6 @@ export function PlaceholderPage({ path }: PlaceholderPageProps) {
   return (
     <section className="panel panel--placeholder">
       <h2 className="panel__title">{spec.title}</h2>
-      <p className="panel__caption">{spec.description}</p>
       <div className="placeholder-state">
         <strong>구현 보류</strong>
         <p>{spec.blockedReason}</p>

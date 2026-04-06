@@ -1,19 +1,17 @@
 "use client";
 
 import type { TimeRange } from "@/types/dashboard";
-import { dashboardRangeLabels } from "@/features/dashboard/range-config";
+import { DASHBOARD_RANGE_LABELS, DASHBOARD_TIME_RANGES } from "@/constants/dashboard";
 
 type TimeRangeTabsProps = {
   value: TimeRange;
   onChange: (value: TimeRange) => void;
 };
 
-const timeRanges: TimeRange[] = ["DAY", "WEEK", "MONTH"];
-
 export function TimeRangeTabs({ value, onChange }: TimeRangeTabsProps) {
   return (
     <div className="time-range-tabs" role="tablist" aria-label="기간 선택">
-      {timeRanges.map((range) => {
+      {DASHBOARD_TIME_RANGES.map((range) => {
         const isSelected = range === value;
 
         return (
@@ -23,7 +21,7 @@ export function TimeRangeTabs({ value, onChange }: TimeRangeTabsProps) {
             className={`time-range-tabs__button${isSelected ? " is-selected" : ""}`}
             onClick={() => onChange(range)}
           >
-            {dashboardRangeLabels[range].label}
+            {DASHBOARD_RANGE_LABELS[range].label}
           </button>
         );
       })}

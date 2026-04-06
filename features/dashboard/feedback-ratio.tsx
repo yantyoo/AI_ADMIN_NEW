@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import type { FeedbackReaction, FeedbackRatioData } from "@/types/dashboard";
+import { SectionHeader } from "@/components/layout/section-header";
 import { KeywordList } from "@/features/dashboard/keyword-list";
-import { SectionHeader } from "@/features/dashboard/section-header";
+import { formatPercent } from "@/utils/text";
 
 type FeedbackRatioProps = {
   data: FeedbackRatioData;
@@ -24,10 +25,6 @@ const VIEW_BOX = 100;
 const CENTER = 50;
 const OUTER_RADIUS = 42;
 const INNER_RADIUS = 24;
-
-const formatPercent = (value: number) => {
-  return Number.isInteger(value) ? `${value}%` : `${value.toFixed(1)}%`;
-};
 
 const pointOnCircle = (cx: number, cy: number, radius: number, angleInDegrees: number) => {
   const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180;
@@ -67,14 +64,12 @@ export function FeedbackRatio({ data }: FeedbackRatioProps) {
     () => describeDonutSlice((data.positive.count / data.totalCount) * 360, 360),
     [data.positive.count, data.totalCount]
   );
-  const selectedSummary = data[selectedReaction === "POSITIVE" ? "positive" : "negative"];
   const hoveredSummary = hoveredReaction ? data[hoveredReaction === "POSITIVE" ? "positive" : "negative"] : null;
-  const keywordTitle = `${reactionMeta[selectedReaction].label} 키워드`;
-  const keywordRangeLabel = `전체 ${selectedSummary.count.toLocaleString()}건 기준`;
+  const keywordTitle = `${reactionMeta[selectedReaction].label} TOP5 키워드`;
 
   return (
     <section className="panel panel--side feedback-ratio-card">
-      <SectionHeader title="피드백 비율" subtitle="오늘 기준 7일" />
+      <SectionHeader title="피드백 비율" className="feedback-ratio-card__header" />
 
       <div className="feedback-ratio">
         <div className="feedback-ratio__chart-shell">
@@ -144,7 +139,6 @@ export function FeedbackRatio({ data }: FeedbackRatioProps) {
 
         <KeywordList
           title={keywordTitle}
-          rangeLabel={keywordRangeLabel}
           items={selectedReaction === "POSITIVE" ? data.positive.keywords : data.negative.keywords}
           bare
         />

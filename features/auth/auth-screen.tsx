@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { ModalDialog } from "@/components/ui/modal-dialog";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import {
   AUTH_OTP_FAILURES_KEY,
@@ -24,6 +25,8 @@ type NoticeModalState = {
   message: string;
 } | null;
 
+const USER_ID_MAX_LENGTH = 10;
+const PASSWORD_MAX_LENGTH = 12;
 const OTP_CODE = "123456";
 const OTP_MAX_FAILURES = 5;
 
@@ -106,6 +109,12 @@ const readNumber = (value: string | null) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const normalizeUserId = (value: string) =>
+  value.replace(/[^A-Za-z0-9]/g, "").slice(0, USER_ID_MAX_LENGTH);
+
+const normalizePassword = (value: string) =>
+  value.replace(/[^A-Za-z0-9]/g, "").slice(0, PASSWORD_MAX_LENGTH);
+
 export default function AuthScreen() {
   const router = useRouter();
   const [form, setForm] = useState<AuthFormState>(defaultState);
@@ -145,14 +154,23 @@ export default function AuthScreen() {
       return;
     }
 
-    setForm((current) => ({ ...current, userId }));
+    const normalizedUserId = normalizeUserId(userId);
+
+    setForm((current) => ({ ...current, userId: normalizedUserId }));
     setOtpLocked(locked);
     setOtpFailures(failures);
-    setOtpOpen(stage === "otp_pending" && Boolean(userId));
+    setOtpOpen(stage === "otp_pending" && Boolean(normalizedUserId));
   }, [router]);
 
   const updateField = (field: keyof AuthFormState) => (value: string) => {
-    setForm((current) => ({ ...current, [field]: value }));
+    const nextValue =
+      field === "userId"
+        ? normalizeUserId(value)
+        : field === "password"
+          ? normalizePassword(value)
+          : value;
+
+    setForm((current) => ({ ...current, [field]: nextValue }));
     setError("");
   };
 
@@ -191,8 +209,8 @@ export default function AuthScreen() {
       return;
     }
 
-    const userId = form.userId.trim();
-    const password = form.password.trim();
+    const userId = normalizeUserId(form.userId.trim());
+    const password = normalizePassword(form.password.trim());
     const account = MOCK_AUTH_ACCOUNTS[userId];
 
     if (!account || account.password !== password) {
@@ -310,10 +328,12 @@ export default function AuthScreen() {
               <span className="field__label">아이디</span>
               <input
                 className="field__input auth-input"
+                maxLength={USER_ID_MAX_LENGTH}
                 value={form.userId}
                 onChange={(event) => updateField("userId")(event.target.value)}
                 placeholder="예: admin01"
                 autoComplete="username"
+                inputMode="text"
               />
             </label>
 
@@ -322,10 +342,12 @@ export default function AuthScreen() {
               <input
                 type="password"
                 className="field__input auth-input"
+                maxLength={PASSWORD_MAX_LENGTH}
                 value={form.password}
                 onChange={(event) => updateField("password")(event.target.value)}
                 placeholder="비밀번호 입력"
                 autoComplete="current-password"
+                inputMode="text"
               />
             </label>
 
@@ -366,9 +388,6 @@ export default function AuthScreen() {
                 <h3>OTP 인증</h3>
                 <p className="auth-otp-modal__caption">{otpMessage}</p>
               </div>
-              <button type="button" className="icon-button" onClick={closeOtp}>
-                ×
-              </button>
             </div>
 
             <form className="auth-otp-modal__body" onSubmit={handleOtpSubmit}>
@@ -393,7 +412,7 @@ export default function AuthScreen() {
 
               <div className="auth-form__actions auth-otp-modal__actions">
                 <button type="button" className="secondary-button auth-cancel" onClick={closeOtp}>
-                  이전
+                  취소
                 </button>
                 <button type="submit" className="primary-button auth-submit" disabled={isOtpDisabled}>
                   {loading ? "처리 중..." : "인증 완료"}
@@ -405,30 +424,25 @@ export default function AuthScreen() {
       ) : null}
 
       {noticeModal ? (
-        <ModalPortal backdropClassName="auth-notice-backdrop" onBackdropClick={closeNoticeModal}>
-          <section
-            className="modal modal--compact auth-notice-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={noticeModal.title}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal__header modal__header--tight auth-notice-modal__header">
-              <h3>{noticeModal.title}</h3>
-              <button type="button" className="icon-button" onClick={closeNoticeModal}>
-                ×
-              </button>
-            </div>
-            <div className="modal__body auth-notice-modal__body">
-              <p className="auth-notice-modal__message">{noticeModal.message}</p>
-            </div>
-            <div className="modal__footer modal__footer--split">
-              <button type="button" className="primary-button" onClick={closeNoticeModal}>
-                확인
-              </button>
-            </div>
-          </section>
-        </ModalPortal>
+        <ModalDialog
+          title={noticeModal.title}
+          ariaLabel={noticeModal.title}
+          onClose={closeNoticeModal}
+          size="sm"
+          compact
+          backdropClassName="auth-notice-backdrop"
+          className="auth-notice-modal"
+          headerClassName="modal__header--tight auth-notice-modal__header"
+          bodyClassName="auth-notice-modal__body"
+          footerClassName="modal__footer--split"
+          footer={
+            <button type="button" className="primary-button" onClick={closeNoticeModal}>
+              확인
+            </button>
+          }
+        >
+          <p className="auth-notice-modal__message">{noticeModal.message}</p>
+        </ModalDialog>
       ) : null}
     </main>
   );
