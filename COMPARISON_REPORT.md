@@ -1,4 +1,4 @@
-# COMPARISON REPORT
+﻿# COMPARISON REPORT
 
 ## Reference Bundle
 
@@ -15,7 +15,8 @@
 
 ## Remaining Differences
 
-- Extra internal documentation exists in `docs/`
+- Extra internal documentation exists at the repository root
 - Legacy feature files remain under `features/` for reuse
 - Mock data modules are still split across `api/` and `types/`
+
 

@@ -53,6 +53,6 @@
 - 장식용 요소를 늘리지 말 것
 
 ## 참고 파일
-- [docs/MAKE_SCREEN_SPEC.md](./MAKE_SCREEN_SPEC.md)
-- [docs/IA_SPEC.md](./IA_SPEC.md)
-- [docs/FEATURE_SPEC.md](./FEATURE_SPEC.md)
+- [MAKE_SCREEN_SPEC.md](./MAKE_SCREEN_SPEC.md)
+- [IA_SPEC.md](./IA_SPEC.md)
+- [FEATURE_SPEC.md](./FEATURE_SPEC.md)

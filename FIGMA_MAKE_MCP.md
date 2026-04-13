@@ -14,16 +14,16 @@
 | 과한 재설계 금지 | 레이아웃/톤앤매너를 새로 창작하지 말 것 |
 
 ## 우선 읽을 파일
-1. [docs/MAKE_STARTER.md](./MAKE_STARTER.md)
-2. [docs/MAKE_SCREEN_SPEC.md](./MAKE_SCREEN_SPEC.md)
-3. [docs/IA_SPEC.md](./IA_SPEC.md)
-4. [docs/FEATURE_SPEC.md](./FEATURE_SPEC.md)
-5. [docs/figma-import-spec.json](./figma-import-spec.json)
+1. [MAKE_STARTER.md](./MAKE_STARTER.md)
+2. [MAKE_SCREEN_SPEC.md](./MAKE_SCREEN_SPEC.md)
+3. [IA_SPEC.md](./IA_SPEC.md)
+4. [FEATURE_SPEC.md](./FEATURE_SPEC.md)
+5. [figma-import-spec.json](./figma-import-spec.json)
 
 ## Make에서의 사용 방식
 - GitHub connector로 이 레포를 연결
-- Make에서 `docs/MAKE_STARTER.md`를 기반 프롬프트로 사용
-- 필요하면 `docs/MAKE_SCREEN_SPEC.md`를 추가 컨텍스트로 넣음
+- Make에서 `MAKE_STARTER.md`를 기반 프롬프트로 사용
+- 필요하면 `MAKE_SCREEN_SPEC.md`를 추가 컨텍스트로 넣음
 
 ## 기대 결과
 - 로그인, 대시보드, 콘텐츠, 캐시 QA, 지식 조회, 피드백, 계정관리 화면을 현재 구조 그대로 생성
