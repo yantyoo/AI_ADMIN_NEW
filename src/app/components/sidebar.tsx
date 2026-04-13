@@ -1,9 +1,4 @@
-"use client";
-
 import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
 import { ModalDialog } from "@/components/ui/modal-dialog";
 import { navItems } from "@/features/layout/config";
 import { clearAuthProfile, readStoredAuthProfile } from "@/features/layout/session";
@@ -14,9 +9,13 @@ const AUTH_USER_KEY = "xperp-mock-auth-user";
 const AUTH_OTP_FAILURES_KEY = "xperp-mock-otp-failures";
 const AUTH_OTP_LOCKED_KEY = "xperp-mock-otp-locked";
 
-export function Sidebar() {
-  const pathname = usePathname() ?? "/";
-  const router = useRouter();
+type SidebarProps = {
+  currentPath: string;
+  onNavigate: (path: string) => void;
+  onLogout: () => void;
+};
+
+export function Sidebar({ currentPath, onNavigate, onLogout }: SidebarProps) {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const currentUser = readStoredAuthProfile();
   const visibleItems = navItems.filter((item) => item.roles.includes(currentUser.role));
@@ -33,31 +32,33 @@ export function Sidebar() {
 
     clearAuthProfile();
     setLogoutOpen(false);
-    router.replace("/login");
+    onLogout();
   };
 
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
         <div className="sidebar__logo">XpERP</div>
-        <div className="sidebar__badge">AI 챗봇 관리자</div>
+        <div className="sidebar__badge">AI 관리자로</div>
       </div>
 
-      <nav className="sidebar__nav" aria-label="주 메뉴">
+      <nav className="sidebar__nav" aria-label="메뉴">
         {visibleItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = currentPath === item.href;
 
           return (
-            <Link
+            <button
               key={item.key}
-              href={item.href}
+              type="button"
               className={`sidebar__nav-item${isActive ? " is-active" : ""}`}
+              onClick={() => onNavigate(item.href)}
+              aria-current={isActive ? "page" : undefined}
             >
               <span className="sidebar__nav-icon" aria-hidden="true">
                 {item.key.slice(0, 1).toUpperCase()}
               </span>
               <span>{item.label}</span>
-            </Link>
+            </button>
           );
         })}
       </nav>
@@ -70,7 +71,11 @@ export function Sidebar() {
         <div className="sidebar__user-role">
           {currentUser.role} · {currentUser.department}
         </div>
-        <button type="button" className="secondary-button sidebar__logout" onClick={() => setLogoutOpen(true)}>
+        <button
+          type="button"
+          className="secondary-button sidebar__logout"
+          onClick={() => setLogoutOpen(true)}
+        >
           로그아웃
         </button>
       </div>

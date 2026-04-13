@@ -1,4 +1,4 @@
-# Make Screen Spec
+﻿# Make Screen Spec
 
 ## 공통 구조
 ```text
@@ -37,6 +37,10 @@ AdminShell
 | Accent blue | `#4a82f5` |
 | Accent green | `#27b870` |
 | Accent rose | `#f24472` |
+
+## 화면 범위
+- 아래 라우트를 **모두** 생성해야 한다.
+- `dashboard`는 첫 화면일 뿐, 유일한 화면이 아니다.
 
 ## 화면 우선순위
 1. `/dashboard`
@@ -93,3 +97,4 @@ AdminShell
 - Make는 화면을 새로 발명하지 말고 기존 구조를 유지한다.
 - 섹션은 가능한 한 현재 코드의 구조를 따른다.
 - 각 화면은 Figma Frame 1개로 시작한다.
+- 모든 라우트를 만든 뒤에만 완료로 본다.

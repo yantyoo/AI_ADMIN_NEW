@@ -156,8 +156,12 @@ button {
   display: flex;
   align-items: center;
   gap: 11px;
+  width: 100%;
   padding: 10px 13px;
+  border: 0;
   border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
   color: #9daece;
   font-size: 14px;
   font-weight: 500;
@@ -173,6 +177,11 @@ button {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   font-weight: 700;
+}
+
+.sidebar__nav-item:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.45);
+  outline-offset: 2px;
 }
 
 .sidebar__nav-icon {
@@ -284,6 +293,18 @@ button {
   margin: 8px 0 0;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.top-header__copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.top-header__slot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: none;
 }
 
 .top-header__user {

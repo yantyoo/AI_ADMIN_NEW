@@ -1,8 +1,5 @@
-﻿"use client";
-
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { ModalDialog } from "@/components/ui/modal-dialog";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import {
@@ -24,6 +21,10 @@ type NoticeModalState = {
   title: string;
   message: string;
 } | null;
+
+type AuthScreenProps = {
+  onAuthenticated: () => void;
+};
 
 const USER_ID_MAX_LENGTH = 10;
 const PASSWORD_MAX_LENGTH = 12;
@@ -115,8 +116,7 @@ const normalizeUserId = (value: string) =>
 const normalizePassword = (value: string) =>
   value.replace(/[^A-Za-z0-9]/g, "").slice(0, PASSWORD_MAX_LENGTH);
 
-export default function AuthScreen() {
-  const router = useRouter();
+export function AuthScreen({ onAuthenticated }: AuthScreenProps) {
   const [form, setForm] = useState<AuthFormState>(defaultState);
   const [helper, setHelper] = useState("");
   const [error, setError] = useState("");
@@ -150,7 +150,7 @@ export default function AuthScreen() {
     const failures = readNumber(window.sessionStorage.getItem(AUTH_OTP_FAILURES_KEY));
 
     if (stage === "authenticated") {
-      router.replace("/dashboard");
+      onAuthenticated();
       return;
     }
 
@@ -160,7 +160,7 @@ export default function AuthScreen() {
     setOtpLocked(locked);
     setOtpFailures(failures);
     setOtpOpen(stage === "otp_pending" && Boolean(normalizedUserId));
-  }, [router]);
+  }, [onAuthenticated]);
 
   const updateField = (field: keyof AuthFormState) => (value: string) => {
     const nextValue =
@@ -297,7 +297,7 @@ export default function AuthScreen() {
 
     setHelper("대시보드로 이동합니다.");
     await sleep(250);
-    router.replace("/dashboard");
+    onAuthenticated();
   };
 
   const isLoginDisabled = loading || !form.userId.trim() || !form.password.trim();
