@@ -1,34 +1,31 @@
-# Figma Make MCP Server
+# Figma Make Context Pack
 
 ## 목적
-- Figma Make에서 읽을 수 있는 HTTPS MCP 엔드포인트를 제공합니다.
-- 로컬 플러그인이 아니라, Make의 custom connector로 연결하는 방식입니다.
+- Figma Make가 이 저장소를 읽을 때, 가장 먼저 봐야 하는 진입 문서입니다.
+- 이 프로젝트는 웹앱을 그대로 Make에서 실행하는 구조가 아니라, **기존 UI를 최대한 유지한 채 생성할 수 있게 하는 컨텍스트 패키지**입니다.
 
-## 엔드포인트
-- `GET /api/mcp`
-- `POST /api/mcp`
-
-## 노출 도구
-| 이름 | 용도 |
+## 핵심 원칙
+| 원칙 | 기준 |
 |---|---|
-| `get_figma_import_spec` | 현재 UI 구조 JSON 반환 |
+| 디자인 보존 | 현재 색상, 간격, 라운드, 패널 구조, 상태값을 우선 유지 |
+| 화면 단위 | 라우트별 1개 프레임으로 시작 |
+| 컴포넌트 재사용 | `AdminShell`, `Sidebar`, `TopHeader`, `SectionHeader`, `ListPanel`, `DetailFrame`, `ModalDialog` 우선 사용 |
+| 상태 유지 | `idle`, `loading`, `success`, `empty`, `error`, `modal`을 반드시 표현 |
+| 과한 재설계 금지 | 레이아웃/톤앤매너를 새로 창작하지 말 것 |
 
-## 노출 리소스
-| URI | 용도 |
-|---|---|
-| `figma://import-spec` | Figma용 구조 스펙 JSON |
+## 우선 읽을 파일
+1. [docs/MAKE_STARTER.md](./MAKE_STARTER.md)
+2. [docs/MAKE_SCREEN_SPEC.md](./MAKE_SCREEN_SPEC.md)
+3. [docs/IA_SPEC.md](./IA_SPEC.md)
+4. [docs/FEATURE_SPEC.md](./FEATURE_SPEC.md)
+5. [docs/figma-import-spec.json](./figma-import-spec.json)
 
-## 노출 프롬프트
-| 이름 | 용도 |
-|---|---|
-| `figma_make_context` | Make에서 문맥 주입용 시작 문구 |
+## Make에서의 사용 방식
+- GitHub connector로 이 레포를 연결
+- Make에서 `docs/MAKE_STARTER.md`를 기반 프롬프트로 사용
+- 필요하면 `docs/MAKE_SCREEN_SPEC.md`를 추가 컨텍스트로 넣음
 
-## Figma Make 연결 방법
-1. 서버를 HTTPS로 배포합니다.
-2. Figma Make에서 `Add context > Connectors > Create`를 엽니다.
-3. MCP server URL에 `https://your-domain.com/api/mcp`를 입력합니다.
-4. `get_figma_import_spec` 도구를 활성화합니다.
-
-## 주의
-- Figma Make는 `localhost`와 `stdio` MCP 서버를 지원하지 않습니다.
-- 반드시 공개 HTTPS URL이 있어야 합니다.
+## 기대 결과
+- 로그인, 대시보드, 콘텐츠, 캐시 QA, 지식 조회, 피드백, 계정관리 화면을 현재 구조 그대로 생성
+- 화면별 상태와 모달까지 포함
+- 디자인 토큰과 레이아웃 규칙을 크게 바꾸지 않음
