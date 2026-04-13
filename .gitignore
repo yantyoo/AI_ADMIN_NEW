@@ -4,3 +4,4 @@ node_modules
 .next-start.err
 .next-start.log
 .deploy-staging
+tsconfig.tsbuildinfo

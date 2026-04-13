@@ -1,0 +1,7 @@
+{
+  "name": "XpERP Admin Importer",
+  "id": "xperp-admin-importer",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"]
+}
